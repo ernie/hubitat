@@ -114,15 +114,21 @@ def parse(String description) {
 def on() {
   def presetLevel = device.currentValue("presetLevel")
   short level = presetLevel == null || presetLevel == 0 ? 0xFF : toZwaveLevel(presetLevel as short)
+  sendEvent(name: "speed", value: toSpeed(level))
+  sendEvent(name: "switch", value: "on")
   delayBetween([
     zwave.switchMultilevelV2.switchMultilevelSet(value: level).format(),
+    zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: 0).format(),
+
     zwave.switchMultilevelV1.switchMultilevelGet().format()
   ], commandDelayMs)
 }
 
 def off() {
+  sendEvent(name: "speed", value: "off")
+  sendEvent(name: "switch", value: "off")
   delayBetween([
-    zwave.switchMultilevelV2.switchMultilevelSet(value: 0x00).format(),
+    zwave.switchMultilevelV2.switchMultilevelSet(value: 0x00, dimmingDuration: 0).format(),
     zwave.switchMultilevelV1.switchMultilevelGet().format()
   ], commandDelayMs)
 }
