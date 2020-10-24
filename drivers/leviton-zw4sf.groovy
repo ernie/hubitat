@@ -15,6 +15,11 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
+
+import groovy.transform.Field
+
+@Field static List fanSpeeds = ["off", "low", "medium", "medium-high", "high"]
+
 metadata {
   definition (name: "Leviton ZW4SF Fan Controller", namespace: "ernie", author: "Ernie Miller", ocfDeviceType: "oic.d.fan") {
     capability "Actuator"
@@ -25,15 +30,14 @@ metadata {
     capability "Refresh"
     capability "Sensor"
     capability "Switch"
-    capability "Switch Level"
 
     attribute "presetLevel", "number"
     attribute "minLevel", "number"
     attribute "maxLevel", "number"
     attribute "levelIndicatorTimeout", "number"
 
-    command "levelUp"
-    command "levelDown"
+    command "speedUp"
+    command "speedDown"
 
     fingerprint mfr:"001D", prod:"0038", deviceId:"0002", inClusters:"0x5E,0x55,0x98,0x9F,0x6C", deviceJoinName: "Leviton ZW4SF Fan Controller"
   }
@@ -124,47 +128,39 @@ def off() {
 }
 
 def setSpeed(speed) {
-  if (logEnable) log.debug "setSpeed >> value: $speed"
+  if (logEnable) log.debug "setSpeed: $speed"
+
+  def value = null
 
   switch (speed) {
-    case "low":
-      setLevel(25)
-      break
-    case "medium-low":
-      setLevel(25)
+    case ["low", "medium-low"]:
+      value = 25
+      speed = "low"
       break
     case "medium":
-      setLevel(50)
+      value = 50
       break
     case "medium-high":
-      setLevel(75)
+      value = 75
       break
     case "high":
-      setLevel(100)
+      value = 100
       break
-    case "on":
-      on()
-      break
+    case ["on", "auto"]:
+      return on()
     case "off":
-      off()
-      break
-    default:
-      if (logEnable) log.debug "Invalid speed: $speed"
+      return off()
   }
-}
-
-def setLevel(value, durationSeconds = null) {
-    if (logEnable) log.debug "setLevel >> value: $value"
-    short level = toDisplayLevel(value as short)
-    String speed = toSpeed(level)
-
-    sendEvent(name: "level", value: level, unit: "%")
+  if (value) {
     sendEvent(name: "speed", value: speed)
-    sendEvent(name: "switch", value: level > 0 ? "on" : "off")
+    sendEvent(name: "switch", value: speed != "off" ? "on" : speed)
     delayBetween([
-            zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(level), dimmingDuration: 0).format(),
+            zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(value as short), dimmingDuration: 0).format(),
             zwave.switchMultilevelV1.switchMultilevelGet().format()
     ], commandDelayMs)
+  } else {
+    if (logEnable) log.debug "Invalid speed: $speed"
+  }
 }
 
 def poll() {
@@ -197,24 +193,34 @@ def indicatorWhenOn() {
   configurationCommand(7, 254)
 }
 
-def levelUp() {
-  setSpeed(toSpeed(device.currentValue("level") + 25))
+def speedUp() {
+  setSpeed(
+    fanSpeeds[
+      Math.min(
+        fanSpeeds.size() - 1,
+        fanSpeeds.indexOf(device.currentValue("speed")) + 1
+      )
+    ]
+  )
 }
 
-def levelDown() {
-  setSpeed(toSpeed(device.currentValue("level") - 25))
+def speedDown() {
+  setSpeed(
+    fanSpeeds[
+      Math.max(
+        0,
+        fanSpeeds.indexOf(device.currentValue("speed")) - 1
+      )
+    ]
+  )
 }
 
 private String toSpeed(level) {
   switch (level as int) {
-    case { it <= 0 }: "off"
-    break
-    case 1..25: "low"
-    break
-    case 26..50: "medium"
-    break
-    case 51..75: "medium-high"
-    break
+    case { it <= 0 }: "off"; break
+    case 1..25: "low"; break
+    case 26..50: "medium"; break
+    case 51..75: "medium-high"; break
     default: "high"
   }
 }
@@ -280,10 +286,9 @@ private zwaveEvent(hubitat.zwave.Command cmd) {
 private levelEvent(short level) {
   def result = null
   if (level == 0) {
-    result = [createEvent(name: "level", value: 0, unit: "%"), createEvent(name: "speed", value: "off"), switchEvent(false)]
+    result = [createEvent(name: "speed", value: "off"), switchEvent(false)]
   } else if (level >= 1 && level <= 100) {
-    result = [createEvent(name: "level", value: toDisplayLevel(level), unit: "%"), createEvent(name: "speed", value: toSpeed(level))]
-    result << switchEvent(true)
+    result = [createEvent(name: "speed", value: toSpeed(level)), switchEvent(true)]
   } else {
     if (logEnable) log.debug "Bad level $level"
   }
@@ -296,11 +301,6 @@ private switchEvent(boolean on) {
 
 private getStatusCommands() {
   [ zwave.switchMultilevelV1.switchMultilevelGet().format() ]
-}
-
-private short toDisplayLevel(short level) {
-  level = Math.max(0, Math.min(100, level))
-  (level == (short) 99) ? 100 : level
 }
 
 private short toZwaveLevel(short level) {
