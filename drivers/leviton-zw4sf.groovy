@@ -173,6 +173,8 @@ def poll() {
 
 def refresh() {
   def commands = statusCommands
+  // Why this order? Silly reason. It's from page 16 of the manual. :P
+  // https://www.leviton.com/en/docs/DG-000-ZW4SF-02A-W.pdf
   for (i in [7, 5, 3, 4, 6]) {
     commands << zwave.configurationV1.configurationGet(parameterNumber: i).format()
   }
