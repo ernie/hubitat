@@ -181,8 +181,6 @@ def ping() {
 
 def refresh() {
   def commands = statusCommands
-  commands << zwave.versionV1.versionGet().format()
-  commands << zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
   for (i in [7, 5, 3, 4, 6]) {
     commands << zwave.configurationV1.configurationGet(parameterNumber: i).format()
   }
