@@ -171,10 +171,6 @@ def poll() {
   delayBetween(statusCommands, commandDelayMs)
 }
 
-def ping() {
-  poll()
-}
-
 def refresh() {
   def commands = statusCommands
   for (i in [7, 5, 3, 4, 6]) {
@@ -269,19 +265,6 @@ private zwaveEvent(hubitat.zwave.commands.configurationv1.ConfigurationReport cm
       break
   }
   result
-}
-
-private zwaveEvent(hubitat.zwave.commands.manufacturerspecificv2.ManufacturerSpecificReport cmd) {
-  if (logEnable) {
-    log.debug "manufacturerId: $cmd.manufacturerId"
-    log.debug "manufacturerName: $cmd.manufacturerName"
-    log.debug "productId: $cmd.productId"
-    log.debug "productTypeId: $cmd.productTypeId"
-  }
-  def msr = String.format("%04X-%04X-%04X", cmd.manufacturerId, cmd.productTypeId, cmd.productId)
-  updateDataValue("MSR","")
-  updateDataValue("manufacturer","29")
-  createEvent([descriptionText: "$device.displayName MSR: $msr", isStateChange: false])
 }
 
 private zwaveEvent(hubitat.zwave.commands.hailv1.Hail cmd) {
