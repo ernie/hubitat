@@ -32,10 +32,6 @@ metadata {
     attribute "maxLevel", "number"
     attribute "levelIndicatorTimeout", "number"
 
-    command "low"
-    command "medium"
-    command "medium_high"
-    command "high"
     command "levelUp"
     command "levelDown"
 
@@ -201,22 +197,6 @@ def indicatorWhenOff() {
 def indicatorWhenOn() {
   sendEvent(name: "indicatorStatus", value: "when on")
   configurationCommand(7, 254)
-}
-
-def low() {
-  setSpeed("low")
-}
-
-def medium() {
-  setSpeed("medium")
-}
-
-def medium_high() {
-  setSpeed("medium-high")
-}
-
-def high() {
-  setSpeed("high")
 }
 
 def levelUp() {
