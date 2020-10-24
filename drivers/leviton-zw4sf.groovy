@@ -65,7 +65,6 @@ metadata {
 
 def installed() {
   if (logEnable) log.debug "installed..."
-  initialize()
   response(refresh())
 }
 
@@ -76,8 +75,6 @@ def updated() {
   }
   if (logEnable) log.debug "updated..."
   state.lastUpdatedAt = now()
-
-  initialize()
   response(configure())
 }
 
