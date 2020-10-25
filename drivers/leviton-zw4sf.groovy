@@ -305,10 +305,6 @@ private switchEvent(boolean on) {
   createEvent(name: "switch", value: on ? "on" : "off")
 }
 
-private getStatusCommands() {
-  [ zwave.switchMultilevelV1.switchMultilevelGet().format() ]
-}
-
 private short toZwaveLevel(short level) {
   Math.max(0, Math.min(99, level))
 }
