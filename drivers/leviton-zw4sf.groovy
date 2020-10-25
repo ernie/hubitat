@@ -116,7 +116,6 @@ def on() {
   sendEvent(name: "speed", value: toSpeed(level))
   sendEvent(name: "switch", value: "on")
   delayBetween([
-    zwave.switchMultilevelV2.switchMultilevelSet(value: level).format(),
     zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: 0).format(),
 
     zwave.switchMultilevelV1.switchMultilevelGet().format()
