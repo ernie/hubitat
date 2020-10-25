@@ -28,7 +28,6 @@ metadata {
     capability "Indicator"
     capability "Polling"
     capability "Refresh"
-    capability "Sensor"
     capability "Switch"
 
     attribute "presetLevel", "number"
