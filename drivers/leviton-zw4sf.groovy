@@ -29,6 +29,7 @@ metadata {
     capability "Polling"
     capability "Refresh"
     capability "Switch"
+    capability "SwitchLevel"
 
     attribute "presetLevel", "number"
     attribute "minLevel", "number"
@@ -57,8 +58,7 @@ metadata {
     input name: "levelIndicatorTimeout", type: "number", title: "Level indicator timeout in seconds",
       description: "0 to 255 (default 3), 0 = level indicator off, 255 = level indicator always on", range: "0..255",
       displayDuringSetup: false, required: false
-     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
-
+    input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
   }
 }
 
@@ -114,6 +114,7 @@ def on() {
   def presetLevel = device.currentValue("presetLevel")
   short level = presetLevel == null || presetLevel == 0 ? 0xFF : toZwaveLevel(presetLevel as short)
   sendEvent(name: "speed", value: toSpeed(level))
+  sendEvent(name: "level", value: toDisplayLevel(level), unit: "%")
   sendEvent(name: "switch", value: "on")
   delayBetween([
     zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: 0).format(),
@@ -124,6 +125,7 @@ def on() {
 
 def off() {
   sendEvent(name: "speed", value: "off")
+  sendEvent(name: "level", value: 0, unit: "%")
   sendEvent(name: "switch", value: "off")
   delayBetween([
     zwave.switchMultilevelV2.switchMultilevelSet(value: 0x00, dimmingDuration: 0).format(),
@@ -138,33 +140,39 @@ def setSpeed(speed) {
 
   switch (speed) {
     case ["low", "medium-low"]:
-      value = 25
-      speed = "low"
+      setLevel(25)
       break
     case "medium":
-      value = 50
+      setLevel(50)
       break
     case "medium-high":
-      value = 75
+      setLevel(75)
       break
     case "high":
-      value = 100
+      setLevel(100)
       break
     case ["on", "auto"]:
       return on()
     case "off":
       return off()
+    default:
+      if (logEnable) log.debug "Invalid speed: $speed"
   }
-  if (value) {
-    sendEvent(name: "speed", value: speed)
-    sendEvent(name: "switch", value: speed != "off" ? "on" : speed)
-    delayBetween([
-            zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(value as short), dimmingDuration: 0).format(),
-            zwave.switchMultilevelV1.switchMultilevelGet().format()
-    ], commandDelayMs)
-  } else {
-    if (logEnable) log.debug "Invalid speed: $speed"
-  }
+}
+
+def setLevel(value, duration = 0) {
+  if (logEnable) log.debug "setLevel: $value"
+
+  short level = toDisplayLevel(value as short)
+  String speed = toSpeed(level)
+
+  sendEvent(name: "speed", value: speed)
+  sendEvent(name: "level", value: level, unit: "%")
+  sendEvent(name: "switch", value: speed != "off" ? "on" : speed)
+  delayBetween([
+          zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(level), dimmingDuration: 0).format(),
+          zwave.switchMultilevelV1.switchMultilevelGet().format()
+  ], commandDelayMs)
 }
 
 def poll() {
@@ -290,9 +298,17 @@ private zwaveEvent(hubitat.zwave.Command cmd) {
 private levelEvent(short level) {
   def result = null
   if (level == 0) {
-    result = [createEvent(name: "speed", value: "off"), switchEvent(false)]
+    result = [
+      createEvent(name: "speed", value: "off"),
+      createEvent(name: "level", value: 0, unit: "%"),
+      switchEvent(false)
+    ]
   } else if (level >= 1 && level <= 100) {
-    result = [createEvent(name: "speed", value: toSpeed(level)), switchEvent(true)]
+    result = [
+      createEvent(name: "speed", value: toSpeed(level)),
+      createEvent(name: "level", value: toDisplayLevel(level), unit: "%"),
+      switchEvent(true)
+    ]
   } else {
     if (logEnable) log.debug "Bad level $level"
   }
@@ -301,6 +317,11 @@ private levelEvent(short level) {
 
 private switchEvent(boolean on) {
   createEvent(name: "switch", value: on ? "on" : "off")
+}
+
+private short toDisplayLevel(short level) {
+  level = Math.max(0, Math.min(100, level))
+  (level == (short) 99) ? 100 : level
 }
 
 private short toZwaveLevel(short level) {
