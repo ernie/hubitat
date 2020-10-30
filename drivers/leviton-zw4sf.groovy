@@ -277,10 +277,6 @@ private zwaveEvent(hubitat.zwave.commands.configurationv1.ConfigurationReport cm
   result
 }
 
-private zwaveEvent(hubitat.zwave.commands.hailv1.Hail cmd) {
-  createEvent(name: "hail", value: "hail", descriptionText: "Switch button was pressed", displayed: false)
-}
-
 private zwaveEvent(hubitat.zwave.Command cmd) {
   log.warn "Unhandled zwave command $cmd"
 }
