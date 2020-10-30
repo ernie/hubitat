@@ -116,21 +116,14 @@ def on() {
   sendEvent(name: "speed", value: toSpeed(level))
   sendEvent(name: "level", value: toDisplayLevel(level), unit: "%")
   sendEvent(name: "switch", value: "on")
-  delayBetween([
-    zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: 0).format(),
-
-    zwave.switchMultilevelV1.switchMultilevelGet().format()
-  ], commandDelayMs)
+  zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: 0).format()
 }
 
 def off() {
   sendEvent(name: "speed", value: "off")
   sendEvent(name: "level", value: 0, unit: "%")
   sendEvent(name: "switch", value: "off")
-  delayBetween([
-    zwave.switchMultilevelV2.switchMultilevelSet(value: 0x00, dimmingDuration: 0).format(),
-    zwave.switchMultilevelV1.switchMultilevelGet().format()
-  ], commandDelayMs)
+  zwave.switchMultilevelV2.switchMultilevelSet(value: 0x00, dimmingDuration: 0).format()
 }
 
 def setSpeed(speed) {
@@ -169,10 +162,7 @@ def setLevel(value, duration = 0) {
   sendEvent(name: "speed", value: speed)
   sendEvent(name: "level", value: level, unit: "%")
   sendEvent(name: "switch", value: speed != "off" ? "on" : speed)
-  delayBetween([
-          zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(level), dimmingDuration: 0).format(),
-          zwave.switchMultilevelV1.switchMultilevelGet().format()
-  ], commandDelayMs)
+  zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(level), dimmingDuration: 0).format()
 }
 
 def poll() {
