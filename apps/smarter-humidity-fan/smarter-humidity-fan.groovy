@@ -122,13 +122,7 @@ def humidityEvent(event) {
     logInfo "Sensitivity criteria met. Humidity $change quickly."
     sensitivityTriggered = true
   }
-  if (
-    maxRuntime > 0 && state.fanOnSince > 0 &&
-   ( (currentTimestamp - state.fanOnSince) > (maxRuntime * 60 * 1000) )
-  ) {
-    logInfo "${fanSwitch.label} has been on over $maxRuntime minutes."
-    fanOff()
-  } else if (state.smart) {
+  if (state.smart) {
     if (
       sensitivityTriggered &&
       state.humidityChange < 0 &&
@@ -161,6 +155,7 @@ def switchEvent(event) {
   logDebug "Received switch event: ${event.value}"
   if (event.value == "off") {
     state.fanOnSince = 0
+    unschedule("runtimeExceeded")
     if (state.smart) {
       logInfo "Switch was turned off. Disabling smart mode."
       state.smart = false
@@ -168,8 +163,18 @@ def switchEvent(event) {
   } else if (event.value == "on") {
     if (maxRuntime > 0) {
       logInfo "Switch was turned on. Will turn off in $maxRuntime minutes."
+      runIn(maxRuntime * 60, "runtimeExceeded")
     }
     state.fanOnSince = event.date.time
+  }
+}
+
+def runtimeExceeded() {
+  if (state.fanOnSince > 0 && fanSwitch.currentValue("switch") == "on") {
+    now = new Date()
+    runtime = ((now.getTime() - state.fanOnSince) / 1000 / 60) as int
+    logInfo "${fanSwitch.label} has been on for $runtime minutes."
+    fanOff()
   }
 }
 
