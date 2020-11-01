@@ -172,7 +172,7 @@ def switchEvent(event) {
     }
   } else if (event.value == "on") {
     if (maxRuntime > 0) {
-      logInfo "Switch was turned on. Will turn off in $maxRuntime minutes."
+      logInfo "Switch was turned on. Auto-off in $maxRuntime minutes."
       runIn(maxRuntime * 60, "runtimeExceeded")
     }
     state.fanOnSince = event.date.time
@@ -190,10 +190,14 @@ def runtimeExceeded() {
 
 private def fanOn() {
   state.smart = true
+  logInfo "Smart mode triggered on ${fanSwitch.label}."
   if (disableModes && disableModes.contains(location.mode)) {
     logDebug "Will not turn on ${fanSwitch.label} in ${location.mode} mode."
   } else {
-    logInfo "Turning on ${fanSwitch.label}."
+    if (maxRuntime > 0) {
+      logInfo "Refreshing auto-off timer. Auto-off in $maxRuntime minutes."
+      runIn(maxRuntime * 60, "runtimeExceeded")
+    }
     fanSwitch.on()
   }
 }
