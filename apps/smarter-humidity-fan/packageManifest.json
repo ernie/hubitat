@@ -1,0 +1,19 @@
+{
+  "packageName": "Smarter Humidity Fan",
+  "author": "Ernie Miller",
+  "version": "1.0.0",
+  "minimumHEVersion": "2.2.3",
+  "dateReleased": "2020-11-01",
+  "communityLink": "https://community.hubitat.com/t/release-smarter-humidity-fan/54509",
+  "apps": [
+    {
+      "id": "f64fd6b0-e100-49df-9431-afa9d24523f6",
+      "name": "Smarter Humidity Fan",
+      "namespace": "ernie",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/apps/smarter-humidity-fan/smarter-humidity-fan.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": true
+    }
+  ]
+}
