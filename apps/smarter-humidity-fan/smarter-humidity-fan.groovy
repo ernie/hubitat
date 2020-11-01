@@ -135,9 +135,9 @@ def humidityEvent(event) {
   sensitivityTriggered = false
   minHumidity = targetHumidity - flexHumidity
   maxHumidity = targetHumidity + flexHumidity
-  logDebug "Acceptable humidity is $targetHumidity% +/- $flexHumidity."
+  logDebug "Acceptable humidity is $targetHumidity% +/- $flexHumidity%."
   if (changeRate >= sensitivity) {
-    logInfo "Sensitivity criteria met. Humidity $change at $changeRate%/minute."
+    logDebug "Sensitivity criteria met. Humidity $change at $changeRate%/min."
     sensitivityTriggered = true
   }
   if (state.smart) {
@@ -156,7 +156,7 @@ def humidityEvent(event) {
       state.humidityChange > 0 &&
       currentHumidity > targetHumidity
     ) {
-      logDebug "Humidity rapidly rose above midpoint of $targetHumidity%."
+      logInfo "Humidity passed $targetHumidity% at $changeRate%/min."
       fanOn()
     } else if (currentHumidity > targetHumidity + flexHumidity) {
       logInfo "Humidity exceeded $maxHumidity%."
