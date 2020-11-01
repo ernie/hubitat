@@ -74,7 +74,7 @@ def mainPage() {
         "configuring your sensitivity. It's highly unlikely that you want " +
         "something greater than 1.0 here."
       input "sensitivity",
-        "decimal", title: "<b<Sensitivity</b> (% / minute, 0.1 - 2.0)",
+        "decimal", title: "<b>Sensitivity</b> (% / minute, 0.1 - 2.0)",
         required: true, defaultValue: 0.33, range: "0.1..2.0"
       input "targetHumidity",
         "number", title: "<b>Target Humidity %</b>", required: true,
