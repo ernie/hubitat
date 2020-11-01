@@ -94,11 +94,14 @@ def updated() {
 }
 
 def initialize() {
-  state.smart = false
-  state.fanOnSince = 0
-  state.humidityChange = 0.0
-  state.lastHumidity = humiditySensor.currentValue("humidity")
-  state.lastHumidityTimestamp = 0
+  if (state.smart == null) {
+    state.smart = false
+  }
+  state.fanOnSince = state.fanOnSince ?: 0
+  state.humidityChange = state.humidityChange ?: 0.0
+  state.lastHumidity = state.lastHumidity ?:
+    humiditySensor.currentValue("humidity")
+  state.lastHumidityTimestamp = state.lastHumidityTimestamp ?: 0
   subscribe(humiditySensor, "humidity", humidityEvent)
   subscribe(fanSwitch, "switch", switchEvent)
 }
