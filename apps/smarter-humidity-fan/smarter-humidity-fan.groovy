@@ -52,10 +52,14 @@ def pageConfig() {
       paragraph "Fan behavior is controlled based on how quickly humidity " +
         "is changing. A rate of X% per minute, configured below, will " +
         "trigger the app to evaluate actions. A rapid rise in humidity will " +
-        "trigger your fan to turn on. A rapid fall in humidity will trigger " +
-        "your fan to turn off, provided humidity has dropped below the target."
-      paragraph "Slower humidity changes can also turn the fan on or off, " +
-        "if they move beyond the target humidity +/- a flex percentage."
+        "trigger your fan to turn on when it surpasses the target percentage."
+      paragraph "Combined with a flex percentage, a range of acceptable " +
+        "humidity is defined, above which the fan will turn on regardless of " +
+        "change rate. Once activated, the fan will run until humidity " +
+        "reaches the bottom of the range or until the auto-off timer " +
+        "engages, assuming the humidity is within the acceptable range. Note " +
+        "that if the humidity is above the maximum acceptable threshold, " +
+        "auto-off will be deferred."
       paragraph "If the fan was manually turned on, but the smart threshold " +
         "is reached, the app will turn your fan off once humidity drops again."
       paragraph "Keep in mind that different humidity sensors have different " +
@@ -73,10 +77,11 @@ def pageConfig() {
 			input "targetHumidity",
         "number", title: "Target Humidity %", required: true, defaultValue: 65
 			input "flexHumidity",
-        "number", title: "Flex Humidity %", required: true, defaultValue: 3
+        "number", title: "Flex % (2-5%)", required: true,
+        defaultValue: 3, range: "2..5"
       input "maxRuntime",
-        "number", title: "Auto-off (minutes, 0 to disable)", required: true,
-        defaultValue: 60
+        "number", title: "Auto-off check (minutes, 0 to disable)",
+        required: true, defaultValue: 60
 			input "disableModes",
         "mode", title: "Disable fan activation in modes", multiple: true
 		}
@@ -128,35 +133,36 @@ def humidityEvent(event) {
   state.lastHumidity = currentHumidity
   state.lastHumidityTimestamp = currentTimestamp
   sensitivityTriggered = false
+  minHumidity = targetHumidity - flexHumidity
+  maxHumidity = targetHumidity + flexHumidity
+  logDebug "Acceptable humidity is $targetHumidity% +/- $flexHumidity."
   if (changeRate >= sensitivity) {
     logInfo "Sensitivity criteria met. Humidity $change at $changeRate%/minute."
     sensitivityTriggered = true
   }
   if (state.smart) {
     if (
-      sensitivityTriggered &&
-      state.humidityChange < 0 &&
-      currentHumidity < targetHumidity
-    ) {
-      logInfo "Humidity dropped below target humidity."
-      fanOff()
-    } else if (
       state.humidityChange < 0 &&
       currentHumidity < targetHumidity - flexHumidity
     ) {
-      logInfo "Humidity dropped over $flexHumidity% below target humidity."
+      logInfo "Humidity dropped to bottom of acceptable range ($minHumidity%)."
       fanOff()
     } else {
-      logDebug "No action taken. Smart mode remains triggered."
+      logDebug "Humidity still above $minHumidity%. No action taken."
     }
   } else { // State is not (yet) smart
-    if (sensitivityTriggered && state.humidityChange > 0) {
+    if (
+      sensitivityTriggered &&
+      state.humidityChange > 0 &&
+      currentHumidity > targetHumidity
+    ) {
+      logDebug "Humidity rapidly rose above midpoint of $targetHumidity%."
       fanOn()
     } else if (currentHumidity > targetHumidity + flexHumidity) {
-      logInfo "Humidity exceeded target by $flexHumidity%."
+      logInfo "Humidity exceeded $maxHumidity%."
       fanOn()
     } else {
-      logDebug "No action taken. Smart mode remains untriggered."
+      logDebug "Humidity change within defined thresholds. No action taken."
     }
   }
 }
@@ -181,7 +187,12 @@ def runtimeExceeded() {
     now = new Date()
     runtime = ((now.getTime() - state.fanOnSince) / 1000 / 60) as int
     logInfo "Auto-off: ${fanSwitch.label} has been on for $runtime minutes."
-    fanOff()
+    maxHumidity = targetHumidity + flexHumidity
+    if (state.lastHumidity > targetHumidity + flexHumidity) {
+      setAutoOff("Humidity is still too high ($maxHumidity%).")
+    } else {
+      fanOff()
+    }
   }
 }
 
