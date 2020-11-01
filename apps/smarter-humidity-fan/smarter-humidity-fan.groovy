@@ -34,56 +34,59 @@ definition(
 )
 
 preferences {
-    page(name: "pageConfig")
+  page(name: "mainPage", title: "Smarter Humidity Fan")
 }
 
-def pageConfig() {
+def mainPage() {
 	dynamicPage(
-    name: "", title: "", install: true, uninstall: true, refreshInterval:0
+    name: "mainPage", title: "<h1>Smarter Humidity Fan</h1>",
+    install: true, uninstall: true, refreshInterval: 0
   ) {
-	  section("Devices") {
+	  section("<h2>Devices</h2>") {
 			input "humiditySensor",
         "capability.relativeHumidityMeasurement", title: "Humidity Sensor:",
         required: true
 			input "fanSwitch",
         "capability.switch", title: "Fan Switch:", required: true
 		}
-		section("Fan Behavior") {
-      paragraph "Fan behavior is controlled based on how quickly humidity " +
-        "is changing. A rate of X% per minute, configured below, will " +
+		section("<h2>Fan Behavior</h2>") {
+      paragraph "<b>Fan behavior is controlled based on how quickly humidity " +
+        "is changing.</b> A rate of X% per minute, configured below, will " +
         "trigger the app to evaluate actions. A rapid rise in humidity will " +
         "trigger your fan to turn on when it surpasses the target percentage."
-      paragraph "Combined with a flex percentage, a range of acceptable " +
-        "humidity is defined, above which the fan will turn on regardless of " +
-        "change rate. Once activated, the fan will run until humidity " +
-        "reaches the bottom of the range or until the auto-off timer " +
-        "engages, assuming the humidity is within the acceptable range. Note " +
-        "that if the humidity is above the maximum acceptable threshold, " +
-        "auto-off will be deferred."
+      paragraph "<b>Target humidity % +/- flex defines a range of acceptable " +
+        "humidity above which the fan will turn on regardless of change " +
+        "rate.</b> Once activated, the fan will run until humidity reaches " +
+        "the bottom of the range or until the auto-off timer engages, " +
+        "assuming the humidity is within the acceptable range. <b>Note that " +
+        "if the humidity is above the maximum acceptable threshold, auto-off " +
+        "will be deferred.</b>"
       paragraph "If the fan was manually turned on, but the smart threshold " +
         "is reached, the app will turn your fan off once humidity drops again."
-      paragraph "Keep in mind that different humidity sensors have different " +
-        "reporting rates and thresholds. It's possible that two reports will " +
-        "need to arrive to determine the current rate of humidity change, if " +
-        "it's been a long time since a report arrived."
+      paragraph "<b>Keep in mind that different humidity sensors have " +
+        "different reporting rates and thresholds.</b> It's possible that " +
+        "two reports will need to arrive to determine the current rate of " +
+        "humidity change, if it's been a long time since a report arrived."
       paragraph "For instance, if you have a sensor which will only report " +
         "at most every 3 minutes, and only if the humidity changes over 2%, " +
-        "your rate of reported change could be as low as 2 / 3 or 0.66%. " +
-        "Take this into account when configuring your sensitivity. It's " +
-        "highly unlikely that you want something greater than 1.0 here."
+        "your rate of reported change could be as low as 2 / 3, or 0.66%, " +
+        "even at maximum reporting frequency. Take this into account when " +
+        "configuring your sensitivity. It's highly unlikely that you want " +
+        "something greater than 1.0 here."
       input "sensitivity",
-        "decimal", title: "Sensitivity (% / minute, 0.1 - 2.0)", required: true,
-        defaultValue: 0.33, range: "0.1..2.0"
+        "decimal", title: "<b<Sensitivity</b> (% / minute, 0.1 - 2.0)",
+        required: true, defaultValue: 0.33, range: "0.1..2.0"
 			input "targetHumidity",
-        "number", title: "Target Humidity %", required: true, defaultValue: 65
+        "number", title: "<b>Target Humidity %</b>", required: true,
+        defaultValue: 65
 			input "flexHumidity",
-        "number", title: "Flex % (2-5%)", required: true,
+        "number", title: "<b>Flex %</b> (2 - 5)", required: true,
         defaultValue: 3, range: "2..5"
       input "maxRuntime",
-        "number", title: "Auto-off check (minutes, 0 to disable)",
+        "number", title: "<b>Auto-off check</b> (minutes, 0 to disable)",
         required: true, defaultValue: 60
 			input "disableModes",
-        "mode", title: "Disable fan activation in modes", multiple: true
+        "mode", title: "<b>Disable fan activation in modes</b>", multiple: true
 		}
 		section("Logging") {
 		  input "logEnabled",
