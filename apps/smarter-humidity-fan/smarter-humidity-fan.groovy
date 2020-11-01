@@ -136,8 +136,6 @@ def humidityEvent(event) {
   state.lastHumidity = currentHumidity
   state.lastHumidityTimestamp = currentTimestamp
   sensitivityTriggered = false
-  minHumidity = targetHumidity - flexHumidity
-  maxHumidity = targetHumidity + flexHumidity
   logDebug "Acceptable humidity is $targetHumidity% +/- $flexHumidity%."
   if (changeRate >= sensitivity) {
     logDebug "Sensitivity criteria met. Humidity $change at $changeRate%/min."
@@ -146,12 +144,12 @@ def humidityEvent(event) {
   if (state.smart) {
     if (
       state.humidityChange < 0 &&
-      currentHumidity < targetHumidity - flexHumidity
+      currentHumidity < minHumidity()
     ) {
-      logInfo "Humidity dropped to bottom of acceptable range ($minHumidity%)."
+      logInfo "Humidity dropped to bottom of range (${minHumidity()}%)."
       fanOff()
     } else {
-      logDebug "Humidity still above $minHumidity%. No action taken."
+      logDebug "Humidity still above ${minHumidity()}%. No action taken."
     }
   } else { // State is not (yet) smart
     if (
@@ -161,8 +159,8 @@ def humidityEvent(event) {
     ) {
       logInfo "Humidity passed $targetHumidity% at $changeRate%/min."
       fanOn()
-    } else if (currentHumidity > targetHumidity + flexHumidity) {
-      logInfo "Humidity exceeded $maxHumidity%."
+    } else if (currentHumidity > maxHumidity()) {
+      logInfo "Humidity exceeded ${maxHumidity()}%."
       fanOn()
     } else {
       logDebug "Humidity change within defined thresholds. No action taken."
@@ -190,13 +188,20 @@ def runtimeExceeded() {
     now = new Date()
     runtime = ((now.getTime() - state.fanOnSince) / 1000 / 60) as int
     logInfo "Auto-off: ${fanSwitch.label} has been on for $runtime minutes."
-    maxHumidity = targetHumidity + flexHumidity
-    if (state.lastHumidity > targetHumidity + flexHumidity) {
-      setAutoOff("Humidity is still too high ($maxHumidity%).")
+    if (state.lastHumidity > maxHumidity()) {
+      setAutoOff("Humidity is still too high (above ${maxHumidity()}%).")
     } else {
       fanOff()
     }
   }
+}
+
+private def maxHumidity() {
+  targetHumidity + flexHumidity
+}
+
+private def minHumidity() {
+  targetHumidity - flexHumidity
 }
 
 private def fanOn() {
