@@ -23,14 +23,14 @@
 */
 
 definition(
-    name: "Smarter Humidity Fan",
-    namespace: "ernie",
-    author: "Ernie Miller",
-    description: "Control a fan switch based on relative humidity.",
-    category: "Convenience",
-    iconUrl: "",
-    iconX2Url: "",
-    iconX3Url: ""
+  name: "Smarter Humidity Fan",
+  namespace: "ernie",
+  author: "Ernie Miller",
+  description: "Control a fan switch based on relative humidity.",
+  category: "Convenience",
+  iconUrl: "",
+  iconX2Url: "",
+  iconX3Url: ""
 )
 
 preferences {
@@ -38,18 +38,18 @@ preferences {
 }
 
 def mainPage() {
-	dynamicPage(
+  dynamicPage(
     name: "mainPage", title: "<h1>Smarter Humidity Fan</h1>",
     install: true, uninstall: true, refreshInterval: 0
   ) {
-	  section("<h2>Devices</h2>") {
-			input "humiditySensor",
+    section("<h2>Devices</h2>") {
+      input "humiditySensor",
         "capability.relativeHumidityMeasurement", title: "Humidity Sensor:",
         required: true
-			input "fanSwitch",
+      input "fanSwitch",
         "capability.switch", title: "Fan Switch:", required: true
-		}
-		section("<h2>Fan Behavior</h2>") {
+    }
+    section("<h2>Fan Behavior</h2>") {
       paragraph "<b>Fan behavior is controlled based on how quickly humidity " +
         "is changing.</b> A rate of X% per minute, configured below, will " +
         "trigger the app to evaluate actions. A rapid rise in humidity will " +
@@ -76,39 +76,39 @@ def mainPage() {
       input "sensitivity",
         "decimal", title: "<b<Sensitivity</b> (% / minute, 0.1 - 2.0)",
         required: true, defaultValue: 0.33, range: "0.1..2.0"
-			input "targetHumidity",
+      input "targetHumidity",
         "number", title: "<b>Target Humidity %</b>", required: true,
         defaultValue: 65
-			input "flexHumidity",
+      input "flexHumidity",
         "number", title: "<b>Flex %</b> (2 - 5)", required: true,
         defaultValue: 3, range: "2..5"
       input "maxRuntime",
         "number", title: "<b>Auto-off check</b> (minutes, 0 to disable)",
         required: true, defaultValue: 60
-			input "disableModes",
+      input "disableModes",
         "mode", title: "<b>Disable fan activation in modes</b>", multiple: true
-		}
-		section("Logging") {
-		  input "logEnabled",
+    }
+    section("Logging") {
+      input "logEnabled",
         "bool", title: "Enable Logging", required: false, defaultValue: false
-		  input "debugLogEnabled",
+      input "debugLogEnabled",
         "bool", title: "Enable Additional Debug Logging", required: false,
         defaultValue: false
-		}
+    }
 
-		section() {
+    section() {
       label title: "Enter a name for this app instance", required: false
     }
-	}
+  }
 }
 
 def installed() {
-	initialize()
+  initialize()
 }
 
 def updated() {
-	unsubscribe()
-	initialize()
+  unsubscribe()
+  initialize()
 }
 
 def initialize() {
