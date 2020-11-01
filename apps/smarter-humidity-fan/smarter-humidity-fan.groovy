@@ -50,23 +50,33 @@ def pageConfig() {
 		}
 		section("Fan Behavior") {
       paragraph "Fan behavior is controlled based on how quickly humidity " +
-        "is changing. A change of X% in Y minutes, configured below, will " +
+        "is changing. A rate of X% per minute, configured below, will " +
         "trigger the app to evaluate actions. A rapid rise in humidity will " +
         "trigger your fan to turn on. A rapid fall in humidity will trigger " +
         "your fan to turn off, provided humidity has dropped below the target."
       paragraph "Slower humidity changes can also turn the fan on or off, " +
-        "if they rise 5% above or below the target humidity, respectively."
+        "if they move beyond the target humidity +/- a flex percentage."
       paragraph "If the fan was manually turned on, but the smart threshold " +
-        "is reached, Smarter Humidity Fan will turn the fan off for you later."
+        "is reached, the app will turn your fan off once humidity drops again."
+      paragraph "Keep in mind that different humidity sensors have different " +
+        "reporting rates and thresholds. It's possible that two reports will " +
+        "need to arrive to determine the current rate of humidity change, if " +
+        "it's been a long time since a report arrived."
+      paragraph "For instance, if you have a sensor which will only report " +
+        "at most every 3 minutes, and only if the humidity changes over 2%, " +
+        "your rate of reported change could be as low as 2 / 3 or 0.66%. " +
+        "Take this into account when configuring your sensitivity. It's " +
+        "highly unlikely that you want something greater than 1.0 here."
       input "sensitivity",
-        "number", title: "Sensitivity %", required: true, defaultValue: 2
-      input "sensitivityPeriod",
-        "number", title: "Sensitivity Minutes", required: true, defaultValue: 10
+        "decimal", title: "Sensitivity (% / minute, 0.1 - 2.0)", required: true,
+        defaultValue: 0.33, range: "0.1..2.0"
 			input "targetHumidity",
         "number", title: "Target Humidity %", required: true, defaultValue: 65
+			input "flexHumidity",
+        "number", title: "Flex Humidity %", required: true, defaultValue: 3
       input "maxRuntime",
         "number", title: "Auto-off (minutes, 0 to disable)", required: true,
-        defaultValue: 120
+        defaultValue: 60
 			input "disableModes",
         "mode", title: "Disable fan activation in modes", multiple: true
 		}
@@ -112,14 +122,14 @@ def humidityEvent(event) {
   currentTimestamp = event.date.time
   state.humidityChange = currentHumidity - state.lastHumidity
   elapsedMinutes = (currentTimestamp - state.lastHumidityTimestamp) / 1000 / 60
-  logDebug "Humidity changed ${state.humidityChange}% in ${elapsedMinutes} min"
+  change = state.humidityChange > 0 ? "rising" : "dropping"
+  changeRate = Math.abs(state.humidityChange) / elapsedMinutes
+  logDebug "Humidity $change: ${state.humidityChange}% in ${elapsedMinutes} min"
   state.lastHumidity = currentHumidity
   state.lastHumidityTimestamp = currentTimestamp
   sensitivityTriggered = false
-  if (Math.abs(state.humidityChange) >= sensitivity &&
-      elapsedMinutes < sensitivityPeriod) {
-    change = state.humidityChange > 0 ? "rising" : "dropping"
-    logInfo "Sensitivity criteria met. Humidity $change quickly."
+  if (changeRate >= sensitivity) {
+    logInfo "Sensitivity criteria met. Humidity $change at $changeRate%/minute."
     sensitivityTriggered = true
   }
   if (state.smart) {
@@ -130,11 +140,11 @@ def humidityEvent(event) {
     ) {
       logInfo "Humidity dropped below target humidity."
       fanOff()
-    } else if ( // In case we drop slowly, but quite low
+    } else if (
       state.humidityChange < 0 &&
-      currentHumidity < targetHumidity - 5
+      currentHumidity < targetHumidity - flexHumidity
     ) {
-      logInfo "Humidity dropped over 5% below target humidity."
+      logInfo "Humidity dropped over $flexHumidity% below target humidity."
       fanOff()
     } else {
       logDebug "No action taken. Smart mode remains triggered."
@@ -142,8 +152,8 @@ def humidityEvent(event) {
   } else { // State is not (yet) smart
     if (sensitivityTriggered && state.humidityChange > 0) {
       fanOn()
-    } else if (currentHumidity > targetHumidity + 5) { // Rose slowly, but high
-      logInfo "Humidity exceeded target by 5%."
+    } else if (currentHumidity > targetHumidity + flexHumidity) {
+      logInfo "Humidity exceeded target by $flexHumidity%."
       fanOn()
     } else {
       logDebug "No action taken. Smart mode remains untriggered."
