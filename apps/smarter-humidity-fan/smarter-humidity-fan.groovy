@@ -180,7 +180,7 @@ def runtimeExceeded() {
   if (state.fanOnSince > 0 && fanSwitch.currentValue("switch") == "on") {
     now = new Date()
     runtime = ((now.getTime() - state.fanOnSince) / 1000 / 60) as int
-    logInfo "${fanSwitch.label} has been on for $runtime minutes."
+    logInfo "Auto-off: ${fanSwitch.label} has been on for $runtime minutes."
     fanOff()
   }
 }
