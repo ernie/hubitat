@@ -1,0 +1,20 @@
+{
+  "author": "Ernie Miller",
+  "gitHubUrl": "https://github.com/ernie/hubitat",
+  "payPalUrl": "https://paypal.me/nilclass",
+  "packages": [
+    {
+      "id": "04c640c8-47e6-4afb-ad3c-deb808bae1d5",
+      "name": "Smarter Humidity Fan",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/apps/smarter-humidity-fan/packageManifest.json",
+      "description": "Control an exhaust fan in response to changes in relative humidity from a sensor.",
+      "tags": [
+        "Multi Sensors",
+        "Temperature & Humidity",
+        "Lights & Switches",
+        "Shower"
+      ]
+    }
+  ]
+}
