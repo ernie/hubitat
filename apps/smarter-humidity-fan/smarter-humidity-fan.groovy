@@ -78,7 +78,7 @@ def mainPage() {
         required: true, defaultValue: 0.33, range: "0.1..2.0"
       input "targetHumidity",
         "number", title: "<b>Target Humidity %</b>", required: true,
-        defaultValue: 65
+        defaultValue: 60
       input "flexHumidity",
         "number", title: "<b>Flex %</b> (2 - 5)", required: true,
         defaultValue: 3, range: "2..5"
