@@ -120,20 +120,21 @@ def initialize() {
   state.humidityChange = state.humidityChange ?: 0.0
   state.lastHumidity = state.lastHumidity ?:
     humiditySensor.currentValue("humidity")
-  state.lastHumidityTimestamp = state.lastHumidityTimestamp ?: 0
+  state.lastHumidityTimestamp = state.lastHumidityTimestamp ?:
+    (new Date()).getTime()
   subscribe(humiditySensor, "humidity", humidityEvent)
   subscribe(fanSwitch, "switch", switchEvent)
 }
 
 def humidityEvent(event) {
-  logDebug "Received humidity event: ${event.value}"
+  logDebug "Received humidity event: $event.value"
   currentHumidity = event.value as Double
   currentTimestamp = event.date.time
   state.humidityChange = currentHumidity - state.lastHumidity
   elapsedMinutes = (currentTimestamp - state.lastHumidityTimestamp) / 1000 / 60
   change = state.humidityChange > 0 ? "rising" : "falling"
   changeRate = Math.abs(state.humidityChange) / elapsedMinutes
-  logDebug "Humidity $change: ${state.humidityChange}% in ${elapsedMinutes} min"
+  logDebug "Humidity $change: $state.humidityChange% in $elapsedMinutes min"
   state.lastHumidity = currentHumidity
   state.lastHumidityTimestamp = currentTimestamp
   sensitivityTriggered = false
@@ -169,7 +170,7 @@ def humidityEvent(event) {
 }
 
 def switchEvent(event) {
-  logDebug "Received switch event: ${event.value}"
+  logDebug "Received switch event: $event.value"
   if (event.value == "off") {
     state.fanOnSince = 0
     unschedule("runtimeExceeded")
@@ -187,7 +188,7 @@ def runtimeExceeded() {
   if (state.fanOnSince > 0 && fanSwitch.currentValue("switch") == "on") {
     now = new Date()
     runtime = ((now.getTime() - state.fanOnSince) / 1000 / 60) as int
-    logInfo "Auto-off: ${fanSwitch.label} has been on for $runtime minutes."
+    logInfo "Auto-off: $fanSwitch.label has been on for $runtime minutes."
     if (state.lastHumidity > maxHumidity) {
       setAutoOff("Humidity is still too high (above $maxHumidity%).")
     } else {
@@ -198,9 +199,9 @@ def runtimeExceeded() {
 
 private def fanOn() {
   state.smart = true
-  logInfo "Smart mode triggered on ${fanSwitch.label}."
+  logInfo "Smart mode triggered on $fanSwitch.label."
   if (disableModes && disableModes.contains(location.mode)) {
-    logDebug "Will not turn on ${fanSwitch.label} in ${location.mode} mode."
+    logDebug "Will not turn on $fanSwitch.label in $location.mode mode."
   } else {
     setAutoOff("Refreshing auto-off timer due to smart mode trigger.")
     fanSwitch.on()
@@ -208,7 +209,7 @@ private def fanOn() {
 }
 
 private def fanOff() {
-  logInfo "Turning off ${fanSwitch.label}."
+  logInfo "Turning off $fanSwitch.label."
   state.smart = false
   state.fanOnSince = 0
   fanSwitch.off()
@@ -225,12 +226,12 @@ private def setAutoOff(message) {
 
 private def logInfo(message) {
   if (logEnabled) {
-    log.info message
+    log.info "$app.label: $message"
   }
 }
 
 private def logDebug(message) {
   if (logEnabled && debugLogEnabled) {
-    log.debug message
+    log.debug "$app.label: $message"
   }
 }
