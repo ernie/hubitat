@@ -52,7 +52,7 @@ def mainPage() {
     section("<h2>Fan Behavior</h2>") {
       paragraph "<b>Fan behavior is controlled based on how quickly humidity " +
         "is changing within a range, called the <em>smart range</em>.</b> " +
-        "When humidity increases at a rate exceeding your (percent/min)  " +
+        "When humidity increases at a rate exceeding your (percent/min) " +
         "sensitivity setting within the smart range, the fan will turn on, " +
         "and will remain on until the humidity drops below the smart range " +
         "again, or until the auto-off timer expires."
