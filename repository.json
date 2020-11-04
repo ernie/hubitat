@@ -15,6 +15,17 @@
         "Lights & Switches",
         "Shower"
       ]
+    },
+    {
+      "id": "6f635b37-9de2-4066-8d95-1dde85730b8c",
+      "name": "Leviton ZW4SF Fan Controller",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/packge-manifests/leviton-zw4sf.json",
+      "description": "Driver for Leviton 4-Speed Fan Controller (ZW4SF)",
+      "tags": [
+        "Lights & Switches",
+        "ZWave"
+      ]
     }
   ]
 }
