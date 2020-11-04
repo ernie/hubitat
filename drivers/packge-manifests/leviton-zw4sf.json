@@ -1,0 +1,16 @@
+{
+  "packageName": "Leviton ZW4SF Fan Controller",
+  "author": "Ernie Miller",
+  "version": "1.0.0",
+  "minimumHEVersion": "2.2.3",
+  "dateReleased": "2020-11-04",
+  "drivers": [
+    {
+      "id": "67255d89-0085-4e3f-b09c-b394889ac6f8",
+      "name": "Leviton ZW4SF Fan Controller",
+      "namespace": "ernie",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/leviton-zw4sf.groovy",
+      "required": true
+    }
+  ]
+}
