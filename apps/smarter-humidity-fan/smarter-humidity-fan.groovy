@@ -69,16 +69,6 @@ def mainPage() {
       paragraph "If the fan was manually turned on, but sensitivity/range " +
         "conditions are met, smart mode will engage, and turn your fan off " +
         "at the appropriate time, as if it had been turned on automatically."
-      paragraph "<b>Keep in mind that different humidity sensors have " +
-        "different reporting rates and thresholds.</b> It's possible that " +
-        "two reports will need to arrive to determine the current rate of " +
-        "humidity change, if it's been a long time since a report arrived."
-      paragraph "For instance, if you have a sensor which will only report " +
-        "at most every 3 minutes, and only if the humidity changes over 2%, " +
-        "your rate of reported change could be as low as 2 / 3, or 0.66%, " +
-        "even at maximum reporting frequency. Take this into account when " +
-        "configuring your sensitivity. It's highly unlikely that you want " +
-        "something greater than 1.0 for a sensitivity setting."
       input "sensitivity",
         "decimal", title: "<b>Sensitivity</b> (% / minute, 0.1 - 2.0)",
         required: true, defaultValue: 1.0, range: "0.1..2.0"
