@@ -1,11 +1,11 @@
 {
   "packageName": "Smarter Humidity Fan",
   "author": "Ernie Miller",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-11-03",
+  "dateReleased": "2020-11-06",
   "communityLink": "https://community.hubitat.com/t/release-smarter-humidity-fan/54509",
-  "releaseNotes": "- Improved log output with app labels\n- Set last humidity timestamp to current time when app installed, to improve first-time activation experience",
+  "releaseNotes": "- Added an excessive change threshold, to allow for triggering on the first report of the morning if the humidity change is sufficient, without waiting for a second report",
   "apps": [
     {
       "id": "f64fd6b0-e100-49df-9431-afa9d24523f6",

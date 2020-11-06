@@ -61,6 +61,11 @@ def mainPage() {
         "fan will turn on (and remain on) while this value is exceeded.</b> " +
         "If the auto-off timer expires and the humidity is still above the " +
         "smart range, the timer will be reset."
+      paragraph "<b>Similarly, since some devices require a significant " +
+        "change before they report a humidity increase, an \"Excessive " +
+        "Change Threshold\" can be configured.</b> This prevents requiring " +
+        "a second report if, for instance, the device has not reported all " +
+        "night, but its first report of the morning increases by several %."
       paragraph "If the fan was manually turned on, but sensitivity/range " +
         "conditions are met, smart mode will engage, and turn your fan off " +
         "at the appropriate time, as if it had been turned on automatically."
@@ -76,13 +81,16 @@ def mainPage() {
         "something greater than 1.0 for a sensitivity setting."
       input "sensitivity",
         "decimal", title: "<b>Sensitivity</b> (% / minute, 0.1 - 2.0)",
-        required: true, defaultValue: 0.33, range: "0.1..2.0"
+        required: true, defaultValue: 1.0, range: "0.1..2.0"
       input "minHumidity",
         "number", title: "<b>Smart Range Minimum %</b>", required: true,
         defaultValue: 55
       input "maxHumidity",
         "number", title: "<b>Smart Range Maximum %</b>", required: true,
         defaultValue: 65
+      input "excessiveChange",
+        "number", title: "<b>Excessive Change Threshold</b> (%, 0 to disable)",
+        required: true, defaultValue: 5
       input "maxRuntime",
         "number", title: "<b>Auto-off check</b> (minutes, 0 to disable)",
         required: true, defaultValue: 60
@@ -159,6 +167,13 @@ def humidityEvent(event) {
       currentHumidity > minHumidity
     ) {
       logInfo "Humidity passed $minHumidity% at $changeRate%/min."
+      fanOn()
+    } else if (
+      excessiveChange > 0 &&
+      state.humidityChange >= excessiveChange
+    ) {
+      logInfo "Change of $state.humidityChange% exceeds configured " +
+              "excessive change threshold of $excessiveChange%."
       fanOn()
     } else if (currentHumidity > maxHumidity) {
       logInfo "Humidity exceeded $maxHumidity%."
