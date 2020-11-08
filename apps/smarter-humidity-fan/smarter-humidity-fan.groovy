@@ -231,12 +231,12 @@ private def setAutoOff(message) {
 
 private def logInfo(message) {
   if (logEnabled) {
-    log.info "$app.displayName: $message"
+    log.info "$app.label: $message"
   }
 }
 
 private def logDebug(message) {
   if (logEnabled && debugLogEnabled) {
-    log.debug "$app.displayName: $message"
+    log.debug "$app.label: $message"
   }
 }
