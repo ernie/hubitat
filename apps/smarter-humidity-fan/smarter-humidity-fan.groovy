@@ -193,7 +193,7 @@ def runtimeExceeded() {
   if (state.fanOnSince > 0 && fanSwitch.currentValue("switch") == "on") {
     now = new Date()
     runtime = ((now.getTime() - state.fanOnSince) / 1000 / 60) as int
-    logInfo "Auto-off: $fanSwitch.label has been on for $runtime minutes."
+    logInfo "Auto-off: $fanSwitch.displayName has been on for $runtime minutes."
     if (state.lastHumidity > maxHumidity) {
       setAutoOff("Humidity is still too high (above $maxHumidity%).")
     } else {
@@ -204,9 +204,9 @@ def runtimeExceeded() {
 
 private def fanOn() {
   state.smart = true
-  logInfo "Smart mode triggered on $fanSwitch.label."
+  logInfo "Smart mode triggered on $fanSwitch.displayName."
   if (disableModes && disableModes.contains(location.mode)) {
-    logDebug "Will not turn on $fanSwitch.label in $location.mode mode."
+    logDebug "Will not turn on $fanSwitch.displayName in $location.mode mode."
   } else {
     setAutoOff("Refreshing auto-off timer due to smart mode trigger.")
     fanSwitch.on()
@@ -214,7 +214,7 @@ private def fanOn() {
 }
 
 private def fanOff() {
-  logInfo "Turning off $fanSwitch.label."
+  logInfo "Turning off $fanSwitch.displayName."
   state.smart = false
   state.fanOnSince = 0
   fanSwitch.off()
@@ -231,12 +231,12 @@ private def setAutoOff(message) {
 
 private def logInfo(message) {
   if (logEnabled) {
-    log.info "$app.label: $message"
+    log.info "$app.displayName: $message"
   }
 }
 
 private def logDebug(message) {
   if (logEnabled && debugLogEnabled) {
-    log.debug "$app.label: $message"
+    log.debug "$app.displayName: $message"
   }
 }
