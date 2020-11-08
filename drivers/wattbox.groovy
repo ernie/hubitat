@@ -1,5 +1,5 @@
 /**
-* WattBox Telnet Driver
+* WattBox Driver
 *
 * Copyright 2020 Ernie Miller
 *
