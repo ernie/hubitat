@@ -19,12 +19,23 @@
     {
       "id": "6f635b37-9de2-4066-8d95-1dde85730b8c",
       "name": "Leviton ZW4SF Fan Controller",
-      "category": "Integrations",
+      "category": "Control",
       "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/packge-manifests/leviton-zw4sf.json",
       "description": "Driver for Leviton 4-Speed Fan Controller (ZW4SF)",
       "tags": [
         "Lights & Switches",
         "ZWave"
+      ]
+    },
+    {
+      "id": "bee4b304-ed22-41eb-85ad-431b02211a6c",
+      "name": "WattBox",
+      "category": "Control",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/packge-manifests/wattbox.json",
+      "description": "Driver for SnapAV WattBox surge protectors supporting telnet API. Tested with WB-250-IPW-2.",
+      "tags": [
+        "Lights & Switches",
+        "Misc. Devices"
       ]
     }
   ]
