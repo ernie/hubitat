@@ -1,0 +1,16 @@
+{
+  "packageName": "WattBox",
+  "author": "Ernie Miller",
+  "version": "1.0.0",
+  "minimumHEVersion": "2.2.3",
+  "dateReleased": "2020-11-08",
+  "drivers": [
+    {
+      "id": "646ef5f4-1395-4ed5-92d0-740b372ad648",
+      "name": "WattBox",
+      "namespace": "ernie",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/wattbox.groovy",
+      "required": true
+    }
+  ]
+}
