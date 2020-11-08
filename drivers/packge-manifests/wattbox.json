@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "minimumHEVersion": "2.2.3",
   "dateReleased": "2020-11-08",
+  "communityLink": "https://community.hubitat.com/t/release-snapav-wattbox-driver/55133",
   "drivers": [
     {
       "id": "646ef5f4-1395-4ed5-92d0-740b372ad648",
