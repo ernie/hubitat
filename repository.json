@@ -37,6 +37,16 @@
         "Lights & Switches",
         "Misc. Devices"
       ]
+    },
+    {
+      "id": "faf65dac-40b3-40fc-ab39-5aa0d1a1ce22",
+      "name": "Virtual Motion Sensor with Switch",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/package-manifests/virtual-motion-sensor-with-switch.json",
+      "description": "Driver providing a virtual motion sensor controlled by a switch, with configurable inactive delay. Useful for connecting things like Motion Lighting to, for instance, a video doorbell via IFTTT.",
+      "tags": [
+        "Lights & Switches"
+      ]
     }
   ]
 }

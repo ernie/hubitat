@@ -3,5 +3,14 @@
   "author": "Ernie Miller",
   "version": "1.0.0",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-11-11"
+  "dateReleased": "2020-11-11",
+  "drivers": [
+    {
+      "id": "1c644159-857a-4f7e-b32f-52929ad91e27",
+      "name": "Virtual Motion Sensor with Switch",
+      "namespace": "ernie",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/virtual-motion-sensor-with-switch.groovy",
+      "required": true
+    }
+  ]
 }
