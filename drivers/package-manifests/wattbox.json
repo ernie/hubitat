@@ -1,10 +1,11 @@
 {
   "packageName": "WattBox",
   "author": "Ernie Miller",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-11-08",
+  "dateReleased": "2020-11-17",
   "communityLink": "https://community.hubitat.com/t/release-snapav-wattbox-driver/55133",
+  "releaseNotes": "Initialize connection properly on hub reboot.",
   "drivers": [
     {
       "id": "646ef5f4-1395-4ed5-92d0-740b372ad648",

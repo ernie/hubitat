@@ -26,6 +26,7 @@ import java.util.regex.Matcher
 
 metadata {
   definition (name: "WattBox", namespace: "ernie", author: "Ernie Miller") {
+    capability "Initialize"
     capability "Refresh"
 
     attribute "firmware", "string"
