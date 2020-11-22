@@ -431,6 +431,7 @@ private powerToStatus(powerLevel) {
   statusIndex = state.levels.reverse().findIndexOf { it < powerLevel }
   def newStatus
   def currentTime = new Date().time
+  def delayFinish = settings.delayFinish ?: 0
 
   if (statusIndex < 0) {
     if (
