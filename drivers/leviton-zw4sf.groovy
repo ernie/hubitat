@@ -64,7 +64,7 @@ metadata {
 
 def installed() {
   if (logEnable) log.debug "installed..."
-  response(refresh())
+  refresh()
 }
 
 def updated() {
@@ -74,7 +74,7 @@ def updated() {
   }
   if (logEnable) log.debug "updated..."
   state.lastUpdatedAt = now()
-  response(configure())
+  configure()
 }
 
 def configure() {
@@ -236,7 +236,7 @@ private zwaveEvent(hubitat.zwave.commands.switchmultilevelv1.SwitchMultilevelRep
 }
 
 private zwaveEvent(hubitat.zwave.commands.switchmultilevelv1.SwitchMultilevelStopLevelChange cmd) {
-  response(zwave.switchMultilevelV1.switchMultilevelGet().format())
+  zwave.switchMultilevelV1.switchMultilevelGet().format()
 }
 
 private zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd) {
