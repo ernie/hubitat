@@ -25,24 +25,29 @@
 import groovy.transform.Field
 
 @Field static Map meters = [
-  energy: [name: "energy", units: "kWh", scale: 0],
-  power: [name: "power", units: "W", scale: 2],
-  voltage: [name: "voltage", units: "V", scale: 4],
-  amperage: [name: "amperage", units: "A", scale: 5],
-]
+  energy: [unit: "kWh", scale: 0],
+  power: [unit: "W", scale: 2],
+  voltage: [unit: "V", scale: 4],
+  amperage: [unit: "A", scale: 5],
+].collectEntries { name, opts ->
+  [name, opts + [name: name]]
+}
+
 
 @Field static Map configParams = [
   overloadProtection: [
 		num: 20,
 		title: "Overload Protection",
+    description: "Disable at your own peril!",
 		size: 1,
     type: "enum",
-		options: ["Disabled (NOT RECOMMENDED)", "Enabled (default)"],
+		options: ["Disabled", "Enabled (default)"],
     defaultValue: "Enabled (default)"
   ],
 	powerFailureRecovery: [
 		num: 21,
-		title: "Power Failure Recovery",
+		title: "On/Off Status Recovery After Power Failure",
+    description: "Switch status upon regaining lost power",
 		size: 1,
     type: "enum",
 		options: ["Remember last status (default)", "On", "Off"],
@@ -50,7 +55,8 @@ import groovy.transform.Field
   ],
 	ledIndicator: [
 		num: 27,
-		title: "LED Power Consumption Indicator",
+		title: "LED Indicator Control",
+    description: "When should the switch light its color-coded power LED?",
 		size: 1,
     type: "enum",
 		options: [
@@ -61,47 +67,55 @@ import groovy.transform.Field
   ],
 	powerValueChange: [
 		num: 151,
-		title: "Power Report Value Change (in watts)",
+		title: "Power Report Value Threshold",
+    description: "This change, in watts, will trigger a report (1-65535, 0 = disable)",
 		size: 2,
     type: "number",
     defaultValue: 50
   ],
 	powerPercentageChange: [
 		num: 152,
-		title: "Power Report % Change",
+		title: "Power Report Pecentage Threshold",
+    description: "This change, in %, will trigger a report (1-255, 0 = disable)",
 		size: 1,
     type: "number",
     defaultValue: 10
   ],
 	powerReportInterval: [
 		num: 171,
-		title: "Power Report Interval (seconds, 0 = disable)",
+		title: "Power Report Frequency",
+    description: "Report power every X seconds (5-2678400, 0 = disable)",
 		size: 4,
     type: "number",
     defaultValue: 0
   ],
 	energyReportInterval: [
 		num: 172,
-		title: "Energy Report Interval (seconds, 0 = disable)",
+		title: "Energy Report Frequency",
+    description: "Report energy every X seconds (5-2678400, 0 = disable)",
 		size: 4,
     type: "number",
     defaultValue: 0
   ],
 	voltageReportInterval: [
 		num: 173,
-		title: "Voltage Report Interval (seconds, 0 = disable)",
+		title: "Voltage Report Frequency",
+    description: "Report voltage every X seconds (5-2678400, 0 = disable)",
 		size: 4,
     type: "number",
     defaultValue: 0
   ],
 	amperageReportInterval: [
 		num: 174,
-		title: "Amperage Report Interval (seconds, 0 = disable)",
+		title: "Electricity (Amperage) Report Interval",
+    description: "Report amperage every X seconds (5-2678400, 0 = disable)",
 		size: 4,
     type: "number",
     defaultValue: 0
   ]
-]
+].collectEntries { name, opts ->
+  [name, opts + [name: name]]
+}
 
 metadata {
   definition (
@@ -109,16 +123,16 @@ metadata {
     author: "Ernie Miller", ocfDeviceType: "oic.d.switch"
   ) {
     capability "Actuator"
-    capability "Sensor"
-    capability "Switch"
-    capability "Momentary"
+    capability "Configuration"
+    capability "Energy Meter"
     capability "Initialize"
     capability "Outlet"
     capability "Power Meter"
-    capability "Energy Meter"
-    capability "Voltage Measurement"
-    capability "Configuration"
+    capability "Pushable Button"
     capability "Refresh"
+    capability "Sensor"
+    capability "Switch"
+    capability "Voltage Measurement"
 
     attribute "powerLow", "number"
     attribute "powerHigh", "number"
@@ -130,28 +144,33 @@ metadata {
     attribute "amperageLow", "number"
     attribute "amperageHigh", "number"
 		attribute "energyTime", "number"
-		attribute "energyCost", "string"
     attribute "energyDuration", "string"
     attribute "status", "string"
 
+    command "push", ["number"]
     command "reset"
 
     fingerprint mfr: "027A", prod: "0101", deviceId: "000D", inClusters: "0x5E,0x25,0x32,0x27,0x2C,0x2B,0x70,0x85,0x59,0x72,0x86,0x7A,0x73,0x5A", deviceJoinName: "Zooz Power Switch"
   }
 
   preferences {
-    input "powerLevels", "string", title: "Power Levels", required: true,
-      defaultValue: "1"
-    input "stateNames", "string", title: "State Names", required: true,
-      defaultValue: "active"
-    input "idleName", "string", title: "Idle Name", required: true,
-      defaultValue: "idle"
-    input "finishedName", "string", title: "Finished Name", required: true,
-      defaultValue: "finished"
-    input "delayIdle", "number", title: "Delay Idle", required: true,
-      defaultValue: 0
+    input "powerLevels", "string", title: "Power Levels",
+      description: "List of increasing power levels in watts, separated by / (Reports below the lowest number here are considered \"idle\", and will be used to determine \"finished\" state after the attached device is seen to be active)",
+      required: true, defaultValue: "1"
+    input "stateNames", "string", title: "State Names",
+      description: "List of state names for power levels, separated by /",
+      required: true, defaultValue: "active"
+    input "idleName", "string", title: "Idle Name",
+      description: "Rename the idle state (ex. \"dirty\")",
+      required: true, defaultValue: "idle"
+    input "finishedName", "string", title: "Finished Name",
+      description: "Rename the finished state (ex. \"clean\")",
+      required: true, defaultValue: "finished"
+    input "delayFinish", "number", title: "Delay Finish",
+      description: "Require below-threshold power reports for this many seconds before transitioning to finished state (0 = immediate)",
+      required: true, defaultValue: 0
     configParams.each { paramName, options ->
-      input(name: paramName, *:options)
+      input options
     }
     input "logEnable", "bool", title: "Enable logging", defaultValue: false
     input "debugEnable", "bool", title: "Enable debug logging",
@@ -182,7 +201,8 @@ def updated() {
     newStatus = powerToStatus(device.currentValue("power"))
     if (newStatus != device.currentValue("status")) {
       sendEvent(
-        name: "status", value: powerToStatus(device.currentValue("power"))
+        name: "status", value: newStatus,
+        descriptionText: "Updating status to $newStatus"
       )
     }
   } else {
@@ -194,8 +214,16 @@ def updated() {
 
 def initialize() {
   refresh()
-  sendEvent(name: "status", value: powerToStatus(device.currentValue("power")))
-  sendEvent(name: "energyTime", value: new Date().time)
+  def status = powerToStatus(device.currentValue("power"))
+  sendEvent(
+    name: "status", value: status,
+    descriptionText: "Initialized status to $status"
+  )
+  def energyTime = new Date().time
+  sendEvent(
+    name: "energyTime", value: energyTime,
+    descriptionText: "Initialized energyTime to $energyTime"
+  )
 }
 
 def configure() {
@@ -203,7 +231,7 @@ def configure() {
   def result = []
 	def commands = []
 	configParams.each { paramName, param ->
-		commands += updateConfigVal(paramName, param)
+		commands += updateConfigVal(param)
 	}
 	result += commandSequence(commands)
 
@@ -215,9 +243,15 @@ def configure() {
 	result
 }
 
-def push() {
+def push(button = 1) {
+  sendEvent(
+    name: "pushed", value: button, descriptionText: "Button $button pushed"
+  )
   if (device.currentValue("status") != idle) {
-    sendEvent(name: "status", value: idle)
+    sendEvent(
+      name: "status", value: idle,
+      descriptionText: "Resetting status to $idle"
+    )
     state.firstIdleAt = null
   }
 }
@@ -239,21 +273,35 @@ def off() {
 }
 
 def refresh() {
-	return commandSequence([
-		switchBinaryGetCommand(),
-		meterGetCommand(meters["energy"]),
-		meterGetCommand(meters["power"]),
-		meterGetCommand(meters["voltage"]),
-		meterGetCommand(meters["amperage"])
-	])
+  sendEvent(
+    name: "numberOfButtons", value: 1,
+    descriptionText: "Refreshing numberOfButtons to 1"
+  )
+  return commandSequence([
+    switchBinaryGetCommand(),
+    meterGetCommand(meters["energy"]),
+    meterGetCommand(meters["power"]),
+    meterGetCommand(meters["voltage"]),
+    meterGetCommand(meters["amperage"])
+  ])
 }
 
 def reset() {
-	["amperage", "energy", "power", "voltage"].each {
-		sendEvent(name: "${it}Low", value: 0)
-		sendEvent(name: "${it}High", value: 0)
+	meters.each { name, meter ->
+		sendEvent(
+      name: "${name}Low", value: 0, unit: meter.unit,
+      descriptionText: "Resetting ${name}Low to 0$meter.unit"
+    )
+		sendEvent(
+      name: "${name}High", value: 0, unit: meter.unit,
+      descriptionText: "Resetting ${name}High to 0$meter.unit"
+    )
 	}
-	sendEvent(name: "energyTime", value: new Date().time)
+  def energyTime = new Date().time
+	sendEvent(
+    name: "energyTime", value: energyTime,
+    descriptionText: "Resetting energyTime to $energyTime"
+  )
 
 	def result = [
 		meterResetCommand(),
@@ -265,12 +313,13 @@ def reset() {
 
 def parse(String description) {
 	def result = []
-	def cmd = zwave.parse(description, commandClassVersions)
-	if (cmd) {
-		result += zwaveEvent(cmd)
+	def command = zwave.parse(description, commandClassVersions)
+	if (command) {
+    logDebug "Z-Wave parse: ${command.inspect()}"
+		result = zwaveEvent(command)
 	}
 	else {
-		log.warn "Unable to parse: $description"
+		log.warn "Z-Wave unable to parse: ${description.inspect()}"
 	}
 
 	result
@@ -279,7 +328,6 @@ def parse(String description) {
 def zwaveEvent(
   hubitat.zwave.commands.configurationv2.ConfigurationReport command
 ) {
-  logDebug "Z-Wave event: $command"
 	def val = command.scaledConfigurationValue
 
 	def configParam = configParams.find { name, param ->
@@ -289,7 +337,7 @@ def zwaveEvent(
 	if (configParam) {
 		def name = configParam.options?.get(val)
 		logDebug "$configParam.title (#$configParam.num) = ${name != null ? name : val} ($val)"
-		state."configVal$command.parameterNumber" = val
+		state."config${configParam.name.capitalize()}" = val
 	} else {
 		logDebug "Parameter $command.parameterNumber = $val"
 	}
@@ -297,7 +345,6 @@ def zwaveEvent(
 }
 
 def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command) {
-	logDebug "SwitchBinaryReport: $command"
   def value = (command.value == 0xFF) ? "on" : "off"
 	[createEvent(
     name: "switch", value: value, type: "digital",
@@ -306,14 +353,12 @@ def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command)
 }
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport command) {
-	logDebug "BasicReport: ${command}"
 	def result = []
 	result << createSwitchEvent(command.value, "physical")
 	return result
 }
 
 def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
-	logDebug "MeterReport: $command"
 	def result = []
 	def val = command.scaledMeterValue
   def meter
@@ -326,13 +371,18 @@ def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
     case "power":
       String newStatus = powerToStatus(val)
       if (newStatus != device.currentValue("status")) {
-        result << createEvent(name: "status", value: newStatus)
+        result << createEvent(
+          name: "status", value: newStatus,
+          descriptionText: "Updating status to $newStatus"
+        )
       }
       break
     case "energy":
       if (val != device.currentValue("energy")) {
+        def energyDuration = calculateEnergyDuration()
         result << createEvent(
-          name: "energyDuration", value: calculateEnergyDuration()
+          name: "energyDuration", value: energyDuration,
+          descriptionText: "Updating energyDuration to $energyDuration"
         )
       }
       break
@@ -343,15 +393,20 @@ def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
   if (meter && val != device.currentValue(meter.name)) {
     low = device.currentValue("${meter.name}Low")
     high = device.currentValue("${meter.name}High")
-    result << createEvent(name: meter.name, value: val, unit: meter.unit)
+    result << createEvent(
+      name: meter.name, value: val, unit: meter.unit,
+      descriptionText: "Updating $meter.name to $val$meter.unit"
+    )
     if (!low || val < low) {
       result << createEvent(
-        name: "${meter.name}Low", value: val, unit: meter.unit
+        name: "${meter.name}Low", value: val, unit: meter.unit,
+        descriptionText: "Updating ${meter.name}Low to $val$meter.unit"
       )
     }
     if (!high || val > high) {
       result << createEvent(
-        name: "${meter.name}High", value: val, unit: meter.unit
+        name: "${meter.name}High", value: val, unit: meter.unit,
+        descriptionText: "Updating ${meter.name}High to $val$meter.unit"
       )
     }
   }
@@ -379,10 +434,10 @@ private powerToStatus(powerLevel) {
 
   if (statusIndex < 0) {
     if (
-      delayIdle == 0 ||
+      delayFinish == 0 ||
       (
         state.firstIdleAt &&
-        state.firstIdleAt < currentTime - (delayIdle * 1000)
+        state.firstIdleAt < currentTime - (delayFinish * 1000)
       )
     ) {
         newStatus = device.currentValue("status") == idle ? idle : finished
@@ -519,24 +574,22 @@ private getCommandClassVersions() {
 	]
 }
 
-private updateConfigVal(name, param) {
+private updateConfigVal(param) {
 	def commands = []
-	if (hasPendingChange(name)) {
-		def newVal = getParamIntVal(name)
-		logInfo "$name (#$param.num): changing ${state["configVal$param.num"]} to $newVal"
+	if (hasPendingChange(param)) {
+		def newVal = getParamIntVal(param)
+		logInfo "$param.name (#$param.num): changing ${state["config${param.name.capitalize()}"]} to $newVal"
 		commands << configSetCommand(param, newVal)
 		commands << configGetCommand(param)
 	}
 	commands
 }
 
-private hasPendingChange(name) {
-  def param = configParams[name]
-	getParamIntVal(name) != state["configVal$param.num"]
+private hasPendingChange(param) {
+	getParamIntVal(param) != state["config${param.name.capitalize()}"]
 }
 
-private getParamIntVal(name) {
-  def param = configParams[name]
-  def value = settings?."$name" ?: configParams[name].defaultValue
+private getParamIntVal(param) {
+  def value = settings?."$param.name" ?: param.defaultValue
   param.options ? param.options.indexOf(value) : value
 }
