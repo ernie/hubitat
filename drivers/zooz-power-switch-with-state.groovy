@@ -282,7 +282,7 @@ def refresh() {
     name: "numberOfButtons", value: 1,
     descriptionText: "Refreshing numberOfButtons to 1"
   )
-  return commandSequence([
+  commandSequence([
     switchBinaryGetCommand(),
     meterGetCommand(meters["energy"]),
     meterGetCommand(meters["power"]),
@@ -347,7 +347,7 @@ def zwaveEvent(
 	} else {
 		logDebug "Parameter $command.parameterNumber = $val"
 	}
-	return []
+	[]
 }
 
 def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command) {
@@ -361,7 +361,7 @@ def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command)
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport command) {
 	def result = []
 	result << createSwitchEvent(command.value, "physical")
-	return result
+	result
 }
 
 def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
@@ -491,11 +491,9 @@ private calculateEnergyDuration() {
 
 		if (duration >= (24 * 60)) {
 			return getFormattedDuration(duration, (24 * 60), "Day")
-		}
-		else if (duration >= 60) {
+		} else if (duration >= 60) {
 			return getFormattedDuration(duration, 60, "Hour")
-		}
-		else {
+		} else {
 			return getFormattedDuration(duration, 0, "Minute")
 		}
 	}
@@ -505,7 +503,7 @@ private getFormattedDuration(duration, divisor, name) {
 	if (divisor) {
 		duration = roundToHundredths(duration / divisor)
 	}
-	return "${duration} ${name}${duration == 1 ? '' : 's'}"
+	"${duration} ${name}${duration == 1 ? '' : 's'}"
 }
 
 private roundToHundredths(number) {
