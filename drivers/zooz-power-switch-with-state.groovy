@@ -233,7 +233,7 @@ def configure() {
   def result = []
 	def commands = []
 	configParams.each { paramName, param ->
-		commands += updateConfigVal(param)
+		commands += updateConfigParam(param)
 	}
 	result += commandSequence(commands)
 
@@ -579,7 +579,7 @@ private getCommandClassVersions() {
 	]
 }
 
-private updateConfigVal(param) {
+private updateConfigParam(param) {
 	def commands = []
 	if (hasPendingChange(param)) {
 		def newVal = getParamIntVal(param)
