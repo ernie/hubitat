@@ -36,6 +36,8 @@ metadata {
       title: "Inactive Delay",
       description: "Seconds until switch/motion toggles off (10 - 120)",
       range: "10..120", defaultValue: 10, required: true
+    input name: "inactiveEnable", type: "bool", title: "Enable automatic inactivity",
+      defaultValue: true
     input name: "logEnable", type: "bool", title: "Enable Logging",
       defaultValue: false
   }
@@ -49,7 +51,7 @@ def on() {
   if (logEnable) { log.info "$device.displayName active" }
   sendEvent(name: "motion", value: "active")
   sendEvent(name: "switch", value: "on")
-  runIn(inactiveSeconds, "off")
+  if (inactiveEnable) { runIn(inactiveSeconds, "off") }
 }
 
 def off() {
