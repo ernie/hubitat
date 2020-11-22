@@ -76,7 +76,7 @@ import groovy.transform.Field
 	powerPercentageChange: [
 		num: 152,
 		title: "Power Report Pecentage Threshold",
-    description: "This change, in %, will trigger a report (1-255, 0 = disable)",
+    description: "This change, in %, will trigger a report (1-255, 0 = disable, low numbers here will make your switch <em>very</em> chatty on the network)",
 		size: 1,
     type: "number",
     defaultValue: 10
