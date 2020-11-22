@@ -36,80 +36,80 @@ import groovy.transform.Field
 
 @Field static Map configParams = [
   overloadProtection: [
-		num: 20,
-		title: "Overload Protection",
+    num: 20,
+    title: "Overload Protection",
     description: "Disable at your own peril!",
-		size: 1,
+    size: 1,
     type: "enum",
-		options: ["Disabled", "Enabled (default)"],
+    options: ["Disabled", "Enabled (default)"],
     defaultValue: "Enabled (default)"
   ],
-	powerFailureRecovery: [
-		num: 21,
-		title: "On/Off Status Recovery After Power Failure",
+  powerFailureRecovery: [
+    num: 21,
+    title: "On/Off Status Recovery After Power Failure",
     description: "Switch status upon regaining lost power",
-		size: 1,
+    size: 1,
     type: "enum",
-		options: ["Remember last status (default)", "On", "Off"],
+    options: ["Remember last status (default)", "On", "Off"],
     defaultValue: "Remember last status (default)"
   ],
-	ledIndicator: [
-		num: 27,
-		title: "LED Indicator Control",
+  ledIndicator: [
+    num: 27,
+    title: "LED Indicator Control",
     description: "When should the switch light its color-coded power LED?",
-		size: 1,
+    size: 1,
     type: "enum",
-		options: [
+    options: [
       "Always show (default)",
       "Show for 5 seconds when turned on/off"
     ],
     defaultValue: "Always show (default)"
   ],
-	powerValueChange: [
-		num: 151,
-		title: "Power Report Value Threshold",
+  powerValueChange: [
+    num: 151,
+    title: "Power Report Value Threshold",
     description: "This change, in watts, will trigger a report (1-65535, 0 = disable, 50 = suggested)",
-		size: 2,
+    size: 2,
     type: "number",
     defaultValue: 50
   ],
-	powerPercentageChange: [
-		num: 152,
-		title: "Power Report Pecentage Threshold",
+  powerPercentageChange: [
+    num: 152,
+    title: "Power Report Pecentage Threshold",
     description: "This change, in %, will trigger a report (1-255, 0 = disable, 10 = suggested, low numbers here will make your switch <em>very</em> chatty on the network)",
-		size: 1,
+    size: 1,
     type: "number",
     defaultValue: 10
   ],
-	powerReportInterval: [
-		num: 171,
-		title: "Power Report Frequency",
+  powerReportInterval: [
+    num: 171,
+    title: "Power Report Frequency",
     description: "Report power every X seconds (5-2678400, 0 = disable, 300 = suggested)",
-		size: 4,
+    size: 4,
     type: "number",
     defaultValue: 300
   ],
-	energyReportInterval: [
-		num: 172,
-		title: "Energy Report Frequency",
+  energyReportInterval: [
+    num: 172,
+    title: "Energy Report Frequency",
     description: "Report energy every X seconds (5-2678400, 0 = disable, 43200 = suggested)",
-		size: 4,
+    size: 4,
     type: "number",
     defaultValue: 43200
   ],
-	voltageReportInterval: [
-		num: 173,
-		title: "Voltage Report Frequency",
+  voltageReportInterval: [
+    num: 173,
+    title: "Voltage Report Frequency",
     description: "Report voltage every X seconds (5-2678400, 0 = disable = suggested)",
-		size: 4,
+    size: 4,
     type: "number",
     defaultValue: 0
   ],
-	amperageReportInterval: [
-		num: 174,
-		title: "Electricity (Amperage) Report Interval",
+  amperageReportInterval: [
+    num: 174,
+    title: "Electricity (Amperage) Report Interval",
     description: "Report amperage every X seconds (5-2678400, 0 = disable = suggested)",
-		size: 4,
+    size: 4,
     type: "number",
     defaultValue: 0
   ]
@@ -143,7 +143,7 @@ metadata {
     attribute "amperage", "number"
     attribute "amperageLow", "number"
     attribute "amperageHigh", "number"
-		attribute "energyTime", "number"
+    attribute "energyTime", "number"
     attribute "energyDuration", "string"
     attribute "status", "string"
 
@@ -231,18 +231,18 @@ def initialize() {
 def configure() {
   logInfo "Configuring."
   def result = []
-	def commands = []
-	configParams.each { paramName, param ->
-		commands += updateConfigParam(param)
-	}
-	result += commandSequence(commands)
+  def commands = []
+  configParams.each { paramName, param ->
+    commands += updateConfigParam(param)
+  }
+  result += commandSequence(commands)
 
-	if (!device.currentValue("energyTime")) {
-		result += reset()
-	} else {
-		result += refresh()
-	}
-	result
+  if (!device.currentValue("energyTime")) {
+    result += reset()
+  } else {
+    result += refresh()
+  }
+  result
 }
 
 def push(button = 1) {
@@ -261,19 +261,19 @@ def push(button = 1) {
 }
 
 def on() {
-	logInfo "Turning on."
-	commandSequence([
-		switchBinarySetCommand(0xFF),
-		switchBinaryGetCommand()
-	])
+  logInfo "Turning on."
+  commandSequence([
+    switchBinarySetCommand(0xFF),
+    switchBinaryGetCommand()
+  ])
 }
 
 def off() {
-	logInfo "Turning off."
-	commandSequence([
-		switchBinarySetCommand(0x00),
-		switchBinaryGetCommand()
-	])
+  logInfo "Turning off."
+  commandSequence([
+    switchBinarySetCommand(0x00),
+    switchBinaryGetCommand()
+  ])
 }
 
 def refresh() {
@@ -293,80 +293,80 @@ def refresh() {
 
 def reset() {
   logInfo "Resetting."
-	meters.each { name, meter ->
-		sendEvent(
+  meters.each { name, meter ->
+    sendEvent(
       name: "${name}Low", value: 0, unit: meter.unit,
       descriptionText: "Resetting ${name}Low to 0$meter.unit"
     )
-		sendEvent(
+    sendEvent(
       name: "${name}High", value: 0, unit: meter.unit,
       descriptionText: "Resetting ${name}High to 0$meter.unit"
     )
-	}
+  }
   def energyTime = new Date().time
-	sendEvent(
+  sendEvent(
     name: "energyTime", value: energyTime,
     descriptionText: "Resetting energyTime to $energyTime"
   )
 
-	def result = [
-		meterResetCommand(),
-		"delay 1000"
-	]
-	result += refresh()
-	result
+  def result = [
+    meterResetCommand(),
+    "delay 1000"
+  ]
+  result += refresh()
+  result
 }
 
 def parse(String description) {
-	def result = []
-	def command = zwave.parse(description, commandClassVersions)
-	if (command) {
+  def result = []
+  def command = zwave.parse(description, commandClassVersions)
+  if (command) {
     logDebug "Z-Wave parse: ${command.inspect()}"
-		result = zwaveEvent(command)
-	}
-	else {
-		log.warn "Z-Wave unable to parse: ${description.inspect()}"
-	}
+    result = zwaveEvent(command)
+  }
+  else {
+    log.warn "Z-Wave unable to parse: ${description.inspect()}"
+  }
 
-	result
+  result
 }
 
 def zwaveEvent(
   hubitat.zwave.commands.configurationv2.ConfigurationReport command
 ) {
-	def val = command.scaledConfigurationValue
+  def val = command.scaledConfigurationValue
 
-	def configParam = configParams.find { name, param ->
-		param.num == command.parameterNumber
-	}?.value
+  def configParam = configParams.find { name, param ->
+    param.num == command.parameterNumber
+  }?.value
 
-	if (configParam) {
-		def name = configParam.options?.get(val)
-		logDebug "$configParam.title (#$configParam.num) = ${name != null ? name : val} ($val)"
-		state."config${configParam.name.capitalize()}" = val
-	} else {
-		logDebug "Parameter $command.parameterNumber = $val"
-	}
-	[]
+  if (configParam) {
+    def name = configParam.options?.get(val)
+    logDebug "$configParam.title (#$configParam.num) = ${name != null ? name : val} ($val)"
+    state."config${configParam.name.capitalize()}" = val
+  } else {
+    logDebug "Parameter $command.parameterNumber = $val"
+  }
+  []
 }
 
 def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command) {
   def value = (command.value == 0xFF) ? "on" : "off"
-	[createEvent(
+  [createEvent(
     name: "switch", value: value, type: "digital",
     descriptionText: "Switch is $value"
   )]
 }
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport command) {
-	def result = []
-	result << createSwitchEvent(command.value, "physical")
-	result
+  def result = []
+  result << createSwitchEvent(command.value, "physical")
+  result
 }
 
 def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
-	def result = []
-	def val = command.scaledMeterValue
+  def result = []
+  def val = command.scaledMeterValue
   def meter
   meter = meters.find { it.value.scale == command.scale }?.value
   if (!meter) {
@@ -421,16 +421,16 @@ def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
 }
 
 def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
-	def encapsulatedCmd = cmd.encapsulatedCommand(commandClassVersions)
+  def encapsulatedCmd = cmd.encapsulatedCommand(commandClassVersions)
 
-	def result = []
-	if (encapsulatedCmd) {
-		result += zwaveEvent(encapsulatedCmd)
-	}
-	else {
-		log.warn "Unable to extract encapsulated cmd from $cmd"
-	}
-	result
+  def result = []
+  if (encapsulatedCmd) {
+    result += zwaveEvent(encapsulatedCmd)
+  }
+  else {
+    log.warn "Unable to extract encapsulated cmd from $cmd"
+  }
+  result
 }
 
 private powerToStatus(powerLevel) {
@@ -483,27 +483,27 @@ private logDebug(message) {
 }
 
 private calculateEnergyDuration() {
-	def energyTimeMS = device.currentValue("energyTime")
-	if (!energyTimeMS) {
-		return "Unknown"
-	} else {
-		def duration = roundToHundredths((new Date().time - energyTimeMS) / 60000)
+  def energyTimeMS = device.currentValue("energyTime")
+  if (!energyTimeMS) {
+    return "Unknown"
+  } else {
+    def duration = roundToHundredths((new Date().time - energyTimeMS) / 60000)
 
-		if (duration >= (24 * 60)) {
-			return getFormattedDuration(duration, (24 * 60), "Day")
-		} else if (duration >= 60) {
-			return getFormattedDuration(duration, 60, "Hour")
-		} else {
-			return getFormattedDuration(duration, 0, "Minute")
-		}
-	}
+    if (duration >= (24 * 60)) {
+      return getFormattedDuration(duration, (24 * 60), "Day")
+    } else if (duration >= 60) {
+      return getFormattedDuration(duration, 60, "Hour")
+    } else {
+      return getFormattedDuration(duration, 0, "Minute")
+    }
+  }
 }
 
 private getFormattedDuration(duration, divisor, name) {
-	if (divisor) {
-		duration = roundToHundredths(duration / divisor)
-	}
-	"${duration} ${name}${duration == 1 ? '' : 's'}"
+  if (divisor) {
+    duration = roundToHundredths(duration / divisor)
+  }
+  "${duration} ${name}${duration == 1 ? '' : 's'}"
 }
 
 private roundToHundredths(number) {
@@ -511,23 +511,23 @@ private roundToHundredths(number) {
 }
 
 private meterGetCommand(meter) {
-	secureCommand(zwave.meterV3.meterGet(scale: meter.scale))
+  secureCommand(zwave.meterV3.meterGet(scale: meter.scale))
 }
 
 private meterResetCommand() {
-	secureCommand(zwave.meterV3.meterReset())
+  secureCommand(zwave.meterV3.meterReset())
 }
 
 private switchBinaryGetCommand() {
-	secureCommand(zwave.switchBinaryV1.switchBinaryGet())
+  secureCommand(zwave.switchBinaryV1.switchBinaryGet())
 }
 
 private switchBinarySetCommand(val) {
-	secureCommand(zwave.switchBinaryV1.switchBinarySet(switchValue: val))
+  secureCommand(zwave.switchBinaryV1.switchBinarySet(switchValue: val))
 }
 
 private configSetCommand(param, val) {
-	secureCommand(
+  secureCommand(
     zwave.configurationV2.configurationSet(
       parameterNumber: param.num, size: param.size,
       scaledConfigurationValue: val
@@ -536,60 +536,60 @@ private configSetCommand(param, val) {
 }
 
 private configGetCommand(param) {
-	secureCommand(
+  secureCommand(
     zwave.configurationV2.configurationGet(parameterNumber: param.num)
   )
 }
 
 private secureCommand(command) {
-	if (
+  if (
     zwaveInfo?.zw?.contains("s") ||
     ("0x98" in device.rawDescription?.split(" "))
   ) {
-		return zwave.securityV1.securityMessageEncapsulation().encapsulate(command).format()
-	} else {
-		return command.format()
-	}
+    return zwave.securityV1.securityMessageEncapsulation().encapsulate(command).format()
+  } else {
+    return command.format()
+  }
 }
 
 private commandSequence(commands, delay = 500) {
-	commands ? delayBetween(commands, delay) : []
+  commands ? delayBetween(commands, delay) : []
 }
 
 private getCommandClassVersions() {
-	[
-		0x20: 1,	// Basic
-		0x25: 1,	// Switch Binary
-		0x27: 1,	// All Switch
-		0x2B: 1,	// Scene Activation
-		0x2C: 1,	// Scene Actuator Configuration
-		0x32: 3,	// Meter v4
-		0x59: 1,	// AssociationGrpInfo
-		0x5A: 1,	// DeviceResetLocally
-		0x5E: 2,	// ZwaveplusInfo
-		0x70: 2,	// Configuration
-		0x72: 2,	// ManufacturerSpecific
-		0x73: 1,	// Powerlevel
-		0x7A: 2,	// Firmware Update Md (3)
-		0x85: 2,	// Association
-		0x86: 1,	// Version (2)
-		0x98: 1		// Security
-	]
+  [
+    0x20: 1,  // Basic
+    0x25: 1,  // Switch Binary
+    0x27: 1,  // All Switch
+    0x2B: 1,  // Scene Activation
+    0x2C: 1,  // Scene Actuator Configuration
+    0x32: 3,  // Meter v4
+    0x59: 1,  // AssociationGrpInfo
+    0x5A: 1,  // DeviceResetLocally
+    0x5E: 2,  // ZwaveplusInfo
+    0x70: 2,  // Configuration
+    0x72: 2,  // ManufacturerSpecific
+    0x73: 1,  // Powerlevel
+    0x7A: 2,  // Firmware Update Md (3)
+    0x85: 2,  // Association
+    0x86: 1,  // Version (2)
+    0x98: 1    // Security
+  ]
 }
 
 private updateConfigParam(param) {
-	def commands = []
-	if (hasPendingChange(param)) {
-		def newVal = getParamIntVal(param)
-		logInfo "Configuration parameter update: $param.name (#$param.num) - changing ${state["config${param.name.capitalize()}"]} to $newVal"
-		commands << configSetCommand(param, newVal)
-		commands << configGetCommand(param)
-	}
-	commands
+  def commands = []
+  if (hasPendingChange(param)) {
+    def newVal = getParamIntVal(param)
+    logInfo "Configuration parameter update: $param.name (#$param.num) - changing ${state["config${param.name.capitalize()}"]} to $newVal"
+    commands << configSetCommand(param, newVal)
+    commands << configGetCommand(param)
+  }
+  commands
 }
 
 private hasPendingChange(param) {
-	getParamIntVal(param) != state["config${param.name.capitalize()}"]
+  getParamIntVal(param) != state["config${param.name.capitalize()}"]
 }
 
 private getParamIntVal(param) {
