@@ -581,7 +581,7 @@ private updateConfigParam(param) {
 	def commands = []
 	if (hasPendingChange(param)) {
 		def newVal = getParamIntVal(param)
-		logInfo "Configuration parameter update: $param.name (#$param.num) - changing ${state["config${param.name.capitalize()}]} to $newVal"
+		logInfo "Configuration parameter update: $param.name (#$param.num) - changing ${state["config${param.name.capitalize()}"]} to $newVal"
 		commands << configSetCommand(param, newVal)
 		commands << configGetCommand(param)
 	}
