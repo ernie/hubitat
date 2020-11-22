@@ -68,7 +68,7 @@ import groovy.transform.Field
 	powerValueChange: [
 		num: 151,
 		title: "Power Report Value Threshold",
-    description: "This change, in watts, will trigger a report (1-65535, 0 = disable)",
+    description: "This change, in watts, will trigger a report (1-65535, 0 = disable, 50 = suggested)",
 		size: 2,
     type: "number",
     defaultValue: 50
@@ -76,7 +76,7 @@ import groovy.transform.Field
 	powerPercentageChange: [
 		num: 152,
 		title: "Power Report Pecentage Threshold",
-    description: "This change, in %, will trigger a report (1-255, 0 = disable, low numbers here will make your switch <em>very</em> chatty on the network)",
+    description: "This change, in %, will trigger a report (1-255, 0 = disable, 10 = suggested, low numbers here will make your switch <em>very</em> chatty on the network)",
 		size: 1,
     type: "number",
     defaultValue: 10
@@ -84,23 +84,23 @@ import groovy.transform.Field
 	powerReportInterval: [
 		num: 171,
 		title: "Power Report Frequency",
-    description: "Report power every X seconds (5-2678400, 0 = disable)",
+    description: "Report power every X seconds (5-2678400, 0 = disable, 300 = suggested)",
 		size: 4,
     type: "number",
-    defaultValue: 0
+    defaultValue: 300
   ],
 	energyReportInterval: [
 		num: 172,
 		title: "Energy Report Frequency",
-    description: "Report energy every X seconds (5-2678400, 0 = disable)",
+    description: "Report energy every X seconds (5-2678400, 0 = disable, 43200 = suggested)",
 		size: 4,
     type: "number",
-    defaultValue: 0
+    defaultValue: 43200
   ],
 	voltageReportInterval: [
 		num: 173,
 		title: "Voltage Report Frequency",
-    description: "Report voltage every X seconds (5-2678400, 0 = disable)",
+    description: "Report voltage every X seconds (5-2678400, 0 = disable = suggested)",
 		size: 4,
     type: "number",
     defaultValue: 0
@@ -108,7 +108,7 @@ import groovy.transform.Field
 	amperageReportInterval: [
 		num: 174,
 		title: "Electricity (Amperage) Report Interval",
-    description: "Report amperage every X seconds (5-2678400, 0 = disable)",
+    description: "Report amperage every X seconds (5-2678400, 0 = disable = suggested)",
 		size: 4,
     type: "number",
     defaultValue: 0
