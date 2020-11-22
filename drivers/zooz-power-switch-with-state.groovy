@@ -179,10 +179,12 @@ metadata {
 }
 
 def installed() {
+  log.info "Zooz Power Switch w/State installed." // No preferences set yet.
   initialize()
 }
 
 def updated() {
+  logInfo "Preferences updated."
   if (powerLevels && stateNames) {
     newLevels = powerLevels.split("\\s*[,/]\\s*").collect { it.toBigDecimal() }.sort()
     newNames = stateNames.split("\\s*[,/]\\s*")
@@ -227,7 +229,7 @@ def initialize() {
 }
 
 def configure() {
-  logDebug "Configuring."
+  logInfo "Configuring."
   def result = []
 	def commands = []
 	configParams.each { paramName, param ->
@@ -244,8 +246,10 @@ def configure() {
 }
 
 def push(button = 1) {
+  logInfo "Virtual button $button pushed."
   sendEvent(
-    name: "pushed", value: button, descriptionText: "Button $button pushed"
+    name: "pushed", value: button,
+    descriptionText: "Virtual button $button pushed"
   )
   if (device.currentValue("status") != idle) {
     sendEvent(
@@ -257,7 +261,7 @@ def push(button = 1) {
 }
 
 def on() {
-	logInfo "Turning On"
+	logInfo "Turning on."
 	commandSequence([
 		switchBinarySetCommand(0xFF),
 		switchBinaryGetCommand()
@@ -265,7 +269,7 @@ def on() {
 }
 
 def off() {
-	logInfo "Turning Off"
+	logInfo "Turning off."
 	commandSequence([
 		switchBinarySetCommand(0x00),
 		switchBinaryGetCommand()
@@ -273,6 +277,7 @@ def off() {
 }
 
 def refresh() {
+  logInfo "Refreshing."
   sendEvent(
     name: "numberOfButtons", value: 1,
     descriptionText: "Refreshing numberOfButtons to 1"
@@ -287,6 +292,7 @@ def refresh() {
 }
 
 def reset() {
+  logInfo "Resetting."
 	meters.each { name, meter ->
 		sendEvent(
       name: "${name}Low", value: 0, unit: meter.unit,
@@ -480,8 +486,7 @@ private calculateEnergyDuration() {
 	def energyTimeMS = device.currentValue("energyTime")
 	if (!energyTimeMS) {
 		return "Unknown"
-	}
-	else {
+	} else {
 		def duration = roundToHundredths((new Date().time - energyTimeMS) / 60000)
 
 		if (duration >= (24 * 60)) {
@@ -541,11 +546,10 @@ private configGetCommand(param) {
 private secureCommand(command) {
 	if (
     zwaveInfo?.zw?.contains("s") ||
-   ("0x98" in device.rawDescription?.split(" "))
+    ("0x98" in device.rawDescription?.split(" "))
   ) {
 		return zwave.securityV1.securityMessageEncapsulation().encapsulate(command).format()
-	}
-	else {
+	} else {
 		return command.format()
 	}
 }
@@ -579,7 +583,7 @@ private updateConfigVal(param) {
 	def commands = []
 	if (hasPendingChange(param)) {
 		def newVal = getParamIntVal(param)
-		logInfo "$param.name (#$param.num): changing ${state["config${param.name.capitalize()}"]} to $newVal"
+		logInfo "Configuration parameter update: $param.name (#$param.num) - changing ${state["config${param.name.capitalize()}]} to $newVal"
 		commands << configSetCommand(param, newVal)
 		commands << configGetCommand(param)
 	}
