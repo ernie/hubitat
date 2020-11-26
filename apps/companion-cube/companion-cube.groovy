@@ -54,8 +54,7 @@ def mainPage() {
         "volume or dimmer level with a rotation to the left (down) or right " +
         "(up)."
       paragraph "Companion cubes can be a bit finicky at times, so please " +
-        "consider this app more of a novelty than something to base critical " +
-        "functionality on."
+        "consider this app more of a novelty than something to depend on."
     }
     section("<h2>Devices</h2>") {
       paragraph "Please configure the driver to simple (7 buttons) mode."
