@@ -47,6 +47,18 @@
       "tags": [
         "Lights & Switches"
       ]
+    },
+    {
+      "id": "b0923f40-0886-46ac-9f81-37a1a8621e9c",
+      "name": "Zooz Power Switch w/State",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/package-manifests/zooz-power-switch-with-state.json",
+      "description": "ZEN15 device driver with configurable state based on current power level. For use with appliances like dishwashers, washers, and gas dryers.",
+      "tags": [
+        "Appliances",
+        "Energy Monitoring",
+        "Lights & Switches"
+      ]
     }
   ]
 }
