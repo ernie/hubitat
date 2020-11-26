@@ -57,7 +57,22 @@
       "tags": [
         "Appliances",
         "Energy Monitoring",
-        "Lights & Switches"
+        "Lights & Switches",
+        "ZWave"
+      ]
+    },
+    {
+      "id": "1e9d34f4-4408-48f9-a1b3-03769637c581",
+      "name": "Companion Cube",
+      "category": "Control",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/apps/companion-cube/packageManifest.json",
+      "description": "Improve your quality of life with a faithful Companion (Aqara) Cube!",
+      "tags": [
+        "Buttons",
+        "Misc Devices",
+        "Lights & Switches",
+        "Multimedia",
+        "Zigbee"
       ]
     }
   ]
