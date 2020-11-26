@@ -42,14 +42,27 @@ def mainPage() {
     name: "mainPage", title: "<h1>Smarter Humidity Fan</h1>",
     install: true, uninstall: true, refreshInterval: 0
   ) {
-    section("<h2>Devices</h2>") {
-      input "humiditySensor",
-        "capability.relativeHumidityMeasurement", title: "Humidity Sensor:",
-        required: true
-      input "fanSwitch",
-        "capability.switch", title: "Fan Switch:", required: true
+    section("Device Instructions", hideable: true, hidden: true) {
+      paragraph "The humidity sensor you select will control the fan switch " +
+        "you select. In addition, you can select additional switches to turn " +
+        "on when the sensor triggers \"smart mode\", and off when the " +
+        "humidity drops again."
+      paragraph "Lastly, the app automatically creates a child virtual " +
+        "switch labeled with the name of the app and suffixed \"Smart Mode\" " +
+        "which reflects the current status of the fan's smart mode. You can " +
+        "use this switch to prevent things like motion lights turning off " +
+        "when you're in the shower, or trigger other, more complex rules in " +
+        "Rule Machine based on it."
     }
-    section("<h2>Fan Behavior</h2>") {
+    section("<h2>Devices</h2>") {
+      input "humiditySensor", "capability.relativeHumidityMeasurement",
+        title: "Humidity Sensor:", required: true
+      input "fanSwitch", "capability.switch", title: "Fan Switch:",
+        required: true
+      input "extraSwitches", "capability.switch",
+        title: "Additional Switches:", multiple: true
+    }
+    section("Fan Behavior Instructions", hideable: true, hidden: true) {
       paragraph "<b>Fan behavior is controlled based on how quickly humidity " +
         "is changing within a range, called the <em>smart range</em>.</b> " +
         "When humidity increases at a rate exceeding your (percent/min) " +
@@ -69,6 +82,8 @@ def mainPage() {
       paragraph "If the fan was manually turned on, but sensitivity/range " +
         "conditions are met, smart mode will engage, and turn your fan off " +
         "at the appropriate time, as if it had been turned on automatically."
+    }
+    section("<h2>Fan Behavior</h2>") {
       input "sensitivity",
         "decimal", title: "<b>Sensitivity</b> (% / minute, 0.1 - 2.0)",
         required: true, defaultValue: 1.0, range: "0.1..2.0"
@@ -122,6 +137,7 @@ def initialize() {
     (new Date()).getTime()
   subscribe(humiditySensor, "humidity", humidityEvent)
   subscribe(fanSwitch, "switch", switchEvent)
+  smartSwitch
 }
 
 def humidityEvent(event) {
@@ -140,13 +156,13 @@ def humidityEvent(event) {
     logDebug "Sensitivity criteria met. Humidity $change at $changeRate%/min."
     sensitivityTriggered = true
   }
-  if (state.smart) {
+  if (smart) {
     if (
       state.humidityChange < 0 &&
       currentHumidity < minHumidity
     ) {
       logInfo "Humidity dropped to bottom of smart range ($minHumidity%)."
-      fanOff()
+      smartModeOff()
     } else {
       logDebug "Humidity still above $minHumidity%. No action taken."
     }
@@ -157,17 +173,17 @@ def humidityEvent(event) {
       currentHumidity > minHumidity
     ) {
       logInfo "Humidity passed $minHumidity% at $changeRate%/min."
-      fanOn()
+      smartModeOn()
     } else if (
       excessiveChange > 0 &&
       state.humidityChange >= excessiveChange
     ) {
       logInfo "Change of $state.humidityChange% exceeds configured " +
               "excessive change threshold of $excessiveChange%."
-      fanOn()
+      smartModeOn()
     } else if (currentHumidity > maxHumidity) {
       logInfo "Humidity exceeded $maxHumidity%."
-      fanOn()
+      smartModeOn()
     } else {
       logDebug "Humidity change within defined thresholds. No action taken."
     }
@@ -177,11 +193,8 @@ def humidityEvent(event) {
 def switchEvent(event) {
   logDebug "Received switch event: $event.value"
   if (event.value == "off") {
-    state.fanOnSince = 0
-    unschedule("runtimeExceeded")
-    if (state.smart) {
-      logInfo "Switch was turned off. Disabling smart mode."
-      state.smart = false
+    if (smart) {
+      smartModeOff()
     }
   } else if (event.value == "on") {
     setAutoOff("Switch was turned on.")
@@ -197,30 +210,41 @@ def runtimeExceeded() {
     if (state.lastHumidity > maxHumidity) {
       setAutoOff("Humidity is still too high (above $maxHumidity%).")
     } else {
-      fanOff()
+      smartModeOff()
     }
   }
 }
 
-private def fanOn() {
+private smartModeOn() {
   state.smart = true
+  smartSwitch.on()
   logInfo "Smart mode triggered on $fanSwitch.displayName."
   if (disableModes && disableModes.contains(location.mode)) {
     logDebug "Will not turn on $fanSwitch.displayName in $location.mode mode."
   } else {
     setAutoOff("Refreshing auto-off timer due to smart mode trigger.")
     fanSwitch.on()
+    if (extraSwitches.size() > 0) {
+      logInfo "Turning on additional switches: ${extraSwitches.join(", ")}"
+      extraSwitches.each { sw -> sw.on() }
+    }
   }
 }
 
-private def fanOff() {
+private smartModeOff() {
   logInfo "Turning off $fanSwitch.displayName."
-  state.smart = false
   state.fanOnSince = 0
+  unschedule("runtimeExceeded")
   fanSwitch.off()
+  if (smart && extraSwitches.size() > 0) {
+    logInfo "Smart mode was on. Turning off additional switches: ${extraSwitches.join(", ")}"
+    extraSwitches.each { sw -> sw.off() }
+  }
+  smartSwitch.off()
+  state.smart = false
 }
 
-private def setAutoOff(message) {
+private setAutoOff(message) {
   if (maxRuntime > 0) {
     logInfo "$message Auto-off in $maxRuntime minutes."
     runIn(maxRuntime * 60, "runtimeExceeded")
@@ -229,13 +253,36 @@ private def setAutoOff(message) {
   }
 }
 
-private def logInfo(message) {
+private getExtraSwitches() {
+  settings.extraSwitches ?: []
+}
+
+private getSmart() {
+  state.smart
+}
+
+private getSmartSwitch() {
+  def smartSwitch = getChildDevice(smartSwitchId)
+  if (!smartSwitch) {
+    smartSwitch = addChildDevice(
+      "hubitat", "Virtual Switch", smartSwitchId,
+      [label: "${app.label} Smart Mode", isComponent: true]
+    )
+  }
+  smartSwitch
+}
+
+private getSmartSwitchId() {
+  "smarter-humidity-fan-${app.id}-switch"
+}
+
+private logInfo(message) {
   if (logEnabled) {
     log.info "$app.label: $message"
   }
 }
 
-private def logDebug(message) {
+private logDebug(message) {
   if (logEnabled && debugLogEnabled) {
     log.debug "$app.label: $message"
   }
