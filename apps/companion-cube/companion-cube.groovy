@@ -129,7 +129,7 @@ def initialize() {
 
 def shake(event) {
   def device = currentDevice
-  logDebug "shake: $device"
+  logInfo "shake: $device"
   if (device?.hasCapability("MusicPlayer")) {
     device.playTextAndRestore("Hello!", 50)
   } else {
@@ -141,25 +141,25 @@ def flip90(event) {
   toggleMode()
   def device = currentDevice ?: nextDevice
   cubeStatus.update(mode: mode, group: group, device: device)
-  logDebug "flip90: mode is now $mode (controlling $device)"
+  logInfo "flip90: mode is now $mode (controlling $device)"
 }
 
 def flip180(event) {
   toggleGroup()
   def device = currentDevice ?: nextDevice
   cubeStatus.update(mode: mode, group: group, device: device)
-  logDebug "flip180: device group ${group + 1}, controlling $device"
+  logInfo "flip180: device group ${group + 1}, controlling $device"
 }
 
 def slide(event) {
   def device = nextDevice()
   cubeStatus.update(mode: mode, group: group, device: device)
-  logDebug "slide: $device"
+  logInfo "slide: $device"
 }
 
 def knock(event) {
   def device = currentDevice
-  logDebug "knock: $device"
+  logInfo "knock: $device"
   if (device?.hasCapability("MusicPlayer")) {
     if (device?.currentValue("status") == "playing") {
       device.pause()
@@ -176,6 +176,7 @@ def knock(event) {
 }
 
 def rotate(event) {
+  logDebug "rotate: $event.value"
   state.lastRotation = (state.lastRotation ?: 0) + Integer.parseInt(event.value)
   runInMillis(500, "applyAdjustment")
 }
@@ -184,10 +185,10 @@ def applyAdjustment() {
   def rotation = state.lastRotation
   state.lastRotation = 0
   if (Math.abs((int)rotation) >= (int)minRotation) {
-    logDebug "Rotation of $rotation exceeded $minRotation degrees. Applying."
+    logInfo "Rotation of $rotation exceeded $minRotation degrees. Applying."
     adjustLevel(currentDevice, (int)rotation)
   } else {
-    logDebug "Rotation of $rotation less than $minRotation degrees. Ignoring."
+    logInfo "Rotation of $rotation less than $minRotation degrees. Ignoring."
   }
 }
 
@@ -196,7 +197,7 @@ private adjustLevel(device, int rotation) {
     def currentLevel = (int)device.currentValue("level")
     def adjustment = (int)(100 * (rotation / (int)sensitivity))
     def newLevel = Math.min(100, Math.max(0, currentLevel + adjustment))
-    logDebug "Adjustment is $adjustment. Setting $device to $newLevel."
+    logInfo "Adjustment is $adjustment. Setting $device to $newLevel."
     device.setLevel(newLevel)
   }
 }
@@ -318,7 +319,7 @@ private toggleMode() {
 }
 
 private flash(sw) {
-  logDebug "Flashing $sw"
+  logInfo "Flashing $sw"
   if (sw.currentValue("switch") == "off") {
     switchOn(sw)
     pause(1000)
