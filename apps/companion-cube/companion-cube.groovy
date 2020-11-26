@@ -131,9 +131,7 @@ def shake(event) {
   def device = currentDevice
   logDebug "shake: $device"
   if (device?.hasCapability("MusicPlayer")) {
-    device.playTrackAndRestore(
-      "http://$location.hub.localIP/local/c062aa5b-34a2-43fc-a5b1-7ab4c8efba42-companion-cube-hello.wav", 50
-    )
+    device.playTextAndRestore("Hello!", 50)
   } else {
     flash(device)
   }

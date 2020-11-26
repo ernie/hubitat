@@ -23,14 +23,5 @@
       "location": "https://raw.githubusercontent.com/ernie/hubitat/main/apps/companion-cube/companion-cube-status.groovy",
       "required": true
     }
-  ],
-  "files": [
-    {
-      "id": "c062aa5b-34a2-43fc-a5b1-7ab4c8efba42",
-      "name": "companion-cube-hello.wav",
-      "namespace": "ernie",
-      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/apps/companion-cube/companion-cube-hello.wav",
-      "required": true
-    }
   ]
 }
