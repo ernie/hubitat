@@ -1,0 +1,17 @@
+{
+  "packageName": "Zooz Power Switch w/State",
+  "author": "Ernie Miller",
+  "version": "1.0",
+  "minimumHEVersion": "2.2.3",
+  "dateReleased": "2020-11-26",
+  "communityLink": "https://community.hubitat.com/t/release-zooz-power-switch-with-state/56472",
+  "drivers": [
+    {
+      "id": "1b99b758-17a6-4ea3-8431-055497c09632",
+      "name": "Zooz Power Switch w/State",
+      "namespace": "ernie",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/zooz-power-switch-with-state.groovy",
+      "required": true
+    }
+  ]
+}
