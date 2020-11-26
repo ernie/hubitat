@@ -44,17 +44,17 @@ def mainPage() {
   ) {
     section("Instructions", hideable: true, hidden: true) {
       paragraph "Companion Cube supports two control modes: switches and " +
-        "music players. To toggle between modes, flip the cube 90&#xb0;. It " +
-        "also allows toggling between two different groups with a 180&#xb0; " +
-        "flip."
+        "music players. To toggle between modes, slide the cube. It also " +
+        "allows toggling between two different groups of devices with a " +
+        "180&#xb0; flip."
       paragraph "To discover which device you're currently controlling, just " +
         "shake the cube. To select the next device in the current group/mode " +
-        "slide the cube. You can turn a switch on/off or play/pause a music " +
-        "player using the cube's knock gesture. Lastly, you can control " +
-        "volume or dimmer level with a rotation to the left (down) or right " +
-        "(up)."
+        "flip the cube 90&#xb0;. You can turn a switch on/off or play/pause " +
+        "a music player using the cube's knock gesture. Lastly, you can " + 
+        "control volume or dimmer level with a rotation to the left (down) " +
+        "or right (up)."
       paragraph "Companion cubes can be a bit finicky at times, so please " +
-        "consider this app more of a novelty than something to depend on."
+        "consider this app a novelty rather than something to depend on."
     }
     section("<h2>Devices</h2>") {
       paragraph "Please configure the driver to simple (7 buttons) mode."
@@ -137,10 +137,9 @@ def shake(event) {
 }
 
 def flip90(event) {
-  toggleMode()
-  def device = currentDevice ?: nextDevice
+  def device = nextDevice()
   cubeStatus.update(mode: mode, group: group, device: device)
-  logInfo "flip90: mode is now $mode (controlling $device)"
+  logInfo "flip90: $device"
 }
 
 def flip180(event) {
@@ -151,9 +150,10 @@ def flip180(event) {
 }
 
 def slide(event) {
-  def device = nextDevice()
+  toggleMode()
+  def device = currentDevice ?: nextDevice
   cubeStatus.update(mode: mode, group: group, device: device)
-  logInfo "slide: $device"
+  logInfo "slide: mode is now $mode (controlling $device)"
 }
 
 def knock(event) {
