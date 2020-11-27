@@ -26,6 +26,7 @@ metadata {
   definition (name: "Companion Cube Status", namespace: "ernie", author: "Ernie Miller") {
     capability "Sensor"
 
+    attribute "event", "string"
     attribute "mode", "string"
     attribute "group", "number"
     attribute "currentDevice", "com.hubitat.app.DeviceWrapper"
@@ -36,6 +37,10 @@ metadata {
 def update(Map options) {
   def status = cubeStatus
   def tileOptions = [:]
+  if (options.event != null && options.event != event) {
+    tileOptions.event = options.event
+    sendEvent(name: "event", value: options.event, descriptionText: "Current event is now $options.event")
+  }
   if (options.mode != null && options.mode != mode) {
     tileOptions.mode = options.mode
     sendEvent(name: "mode", value: options.mode, descriptionText: "Current mode is now $options.mode")
@@ -52,6 +57,7 @@ def update(Map options) {
   // There's a race condition if we rely on the events above having taken effect
   if (tileOptions.size() > 0) {
     sendEvent(name: "tile", value: renderTile(tileOptions), descriptionText: "Tile was updated")
+    if (tileOptions.event != "idle") { runIn(6, "revertToIdle") }
   }
 }
 
@@ -59,8 +65,12 @@ private renderTile(Map options) {
   """
   |<table width="100%" align="center">
   |  <tr>
-  |    <td align="center">Group ${options.group ?: group}</td>
-  |    <td align="center">${(options.mode ?: mode).capitalize()}</td>
+  |    <td align="center" width="50%">
+  |      Group ${options.group ?: group} ${(options.mode ?: mode).capitalize()}
+  |    </td>
+  |    <td align="center" width="50%">
+  |      ${(options.event ?: event)}
+  |    </td>
   |  </tr>
   |  <tr>
   |    <td align="center" colspan="2">${options.device ?: currentDevice}</td>
@@ -79,4 +89,8 @@ private getMode() {
 
 private getCurrentDevice() {
   device.currentValue("currentDevice")
+}
+
+private revertToIdle() {
+  update(event: "idle")
 }

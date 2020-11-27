@@ -123,11 +123,12 @@ def initialize() {
   state.currentSwitchId = state.currentSwitchId ?: groupSwitches[0].id
   state.currentPlayerId = state.currentPlayerId ?: groupPlayers[0].id
   def device = currentDevice ?: nextDevice
-  cubeStatus.update(mode: mode, group: group, device: device)
+  updateCubeStatus("idle", device)
 }
 
 def shake(event) {
   def device = currentDevice
+  updateCubeStatus("shaken", device)
   logInfo "shake: $device"
   if (device?.hasCapability("MusicPlayer")) {
     device.playTextAndRestore("Hello!", 50)
@@ -138,26 +139,27 @@ def shake(event) {
 
 def flip90(event) {
   def device = nextDevice()
-  cubeStatus.update(mode: mode, group: group, device: device)
+  updateCubeStatus("flipped 90&#xb0;", device)
   logInfo "flip90: $device"
 }
 
 def flip180(event) {
   toggleGroup()
   def device = currentDevice ?: nextDevice
-  cubeStatus.update(mode: mode, group: group, device: device)
+  updateCubeStatus("flipped 180&#xb0;", device)
   logInfo "flip180: device group ${group + 1}, controlling $device"
 }
 
 def slide(event) {
   toggleMode()
   def device = currentDevice ?: nextDevice
-  cubeStatus.update(mode: mode, group: group, device: device)
+  updateCubeStatus("slid", device)
   logInfo "slide: mode is now $mode (controlling $device)"
 }
 
 def knock(event) {
   def device = currentDevice
+  updateCubeStatus("knocked", device)
   logInfo "knock: $device"
   if (device?.hasCapability("MusicPlayer")) {
     if (device?.currentValue("status") == "playing") {
@@ -185,7 +187,9 @@ def applyAdjustment() {
   state.lastRotation = 0
   if (Math.abs((int)rotation) >= (int)minRotation) {
     logInfo "Rotation of $rotation exceeded $minRotation degrees. Applying."
-    adjustLevel(currentDevice, (int)rotation)
+    def device = currentDevice
+    updateCubeStatus("rotated ${rotation}&#xb0;", device)
+    adjustLevel(device, (int)rotation)
   } else {
     logInfo "Rotation of $rotation less than $minRotation degrees. Ignoring."
   }
@@ -356,6 +360,10 @@ private getCubeStatus() {
     )
   }
   cubeStatus
+}
+
+private updateCubeStatus(event, device = currentDevice) {
+  cubeStatus.update(event: event, mode: mode, group: group, device: device)
 }
 
 private getCubeStatusId() {

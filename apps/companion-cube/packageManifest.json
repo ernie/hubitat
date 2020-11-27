@@ -1,10 +1,11 @@
 {
   "packageName": "Companion Cube",
   "author": "Ernie Miller",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-11-26",
+  "dateReleased": "2020-11-27",
   "communityLink": "https://community.hubitat.com/t/release-companion-cube-toy-app-for-aqara-cube/56924",
+  "releaseNotes": "Improved feedback on the dashboard tile.",
   "apps": [
     {
       "id": "c4f4fc86-b624-4202-af7d-0f7b6455c2c3",
