@@ -1,11 +1,11 @@
 {
   "packageName": "Smarter Humidity Fan",
   "author": "Ernie Miller",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-11-26",
+  "dateReleased": "2020-11-28",
   "communityLink": "https://community.hubitat.com/t/release-smarter-humidity-fan/54509",
-  "releaseNotes": "- Added a child virtual switch to signal to other apps that smart mode is active\n- Added additional switches to turn on/off when smart mode goes active/inactive\n- Improved readability of settings page via disclosure triangles for instructions",
+  "releaseNotes": "Allow disabling Smart Mode based on a switch.",
   "apps": [
     {
       "id": "f64fd6b0-e100-49df-9431-afa9d24523f6",

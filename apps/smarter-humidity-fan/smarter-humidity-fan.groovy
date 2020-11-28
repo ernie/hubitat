@@ -42,27 +42,27 @@ def mainPage() {
     name: "mainPage", title: "<h1>Smarter Humidity Fan</h1>",
     install: true, uninstall: true, refreshInterval: 0
   ) {
-    section("Device Instructions", hideable: true, hidden: true) {
+    section("<b>Device Instructions</b>", hideable: true, hidden: true) {
       paragraph "The humidity sensor you select will control the fan switch " +
         "you select. In addition, you can select additional switches to turn " +
-        "on when the sensor triggers \"smart mode\", and off when the " +
-        "humidity drops again."
+        "on when the sensor triggers Smart Mode, and off when the humidity " +
+        "drops again."
       paragraph "Lastly, the app automatically creates a child virtual " +
         "switch labeled with the name of the app and suffixed \"Smart Mode\" " +
-        "which reflects the current status of the fan's smart mode. You can " +
-        "use this switch to prevent things like motion lights turning off " +
-        "when you're in the shower, or trigger other, more complex rules in " +
-        "Rule Machine based on it."
+        "which reflects the current status of Smart Mode. You can use this " +
+        "switch to prevent things like motion lights turning off when you're " +
+        "in the shower, or trigger other, more complex rules in Rule Machine " +
+        "based on it."
     }
     section("<h2>Devices</h2>") {
       input "humiditySensor", "capability.relativeHumidityMeasurement",
-        title: "Humidity Sensor:", required: true
-      input "fanSwitch", "capability.switch", title: "Fan Switch:",
+        title: "<b>Humidity Sensor</b>", required: true
+      input "fanSwitch", "capability.switch", title: "<b>Fan Switch</b>",
         required: true
       input "extraSwitches", "capability.switch",
-        title: "Additional Switches:", multiple: true
+        title: "<b>Additional Switches</b>", multiple: true
     }
-    section("Fan Behavior Instructions", hideable: true, hidden: true) {
+    section("<b>Fan Behavior Instructions</b>", hideable: true, hidden: true) {
       paragraph "<b>Fan behavior is controlled based on how quickly humidity " +
         "is changing within a range, called the <em>smart range</em>.</b> " +
         "When humidity increases at a rate exceeding your (percent/min) " +
@@ -100,7 +100,9 @@ def mainPage() {
         "number", title: "<b>Auto-off check</b> (minutes, 0 to disable)",
         required: true, defaultValue: 60
       input "disableModes",
-        "mode", title: "<b>Disable fan activation in modes</b>", multiple: true
+        "mode", title: "<b>Disable Smart Mode in modes</b>", multiple: true
+      input "disableSwitch", "capability.switch",
+        title: "<b>Disable Smart Mode with switch</b>"
     }
     section("Logging") {
       input "logEnabled",
@@ -193,9 +195,7 @@ def humidityEvent(event) {
 def switchEvent(event) {
   logDebug "Received switch event: $event.value"
   if (event.value == "off") {
-    if (smart) {
-      smartModeOff()
-    }
+    smartModeOff()
   } else if (event.value == "on") {
     setAutoOff("Switch was turned on.")
     state.fanOnSince = event.date.time
@@ -216,12 +216,14 @@ def runtimeExceeded() {
 }
 
 private smartModeOn() {
-  state.smart = true
-  smartSwitch.on()
-  logInfo "Smart mode triggered on $fanSwitch.displayName."
-  if (disableModes && disableModes.contains(location.mode)) {
-    logDebug "Will not turn on $fanSwitch.displayName in $location.mode mode."
+  if (disableModes?.contains(location.mode)) {
+    logDebug "Smart mode bypassed due to $location.mode mode."
+  } else if (disableSwitch?.currentValue("switch") == "on") {
+    logDebug "Smart mode bypassed due to $disableSwitch.displayName."
   } else {
+    state.smart = true
+    smartSwitch.on()
+    logInfo "Smart mode triggered on $fanSwitch.displayName."
     setAutoOff("Refreshing auto-off timer due to smart mode trigger.")
     fanSwitch.on()
     if (extraSwitches.size() > 0) {
