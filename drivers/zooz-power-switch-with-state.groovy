@@ -206,6 +206,11 @@ def updated() {
         name: "status", value: newStatus,
         descriptionText: "Updating status to $newStatus"
       )
+      if (newStatus == finished) {
+        statusContact.open()
+      } else if (statusContact.currentValue("contact") != "closed") {
+        statusContact.close()
+      }
     }
   } else {
     state.levels = []
@@ -222,6 +227,7 @@ def initialize() {
     descriptionText: "Initialized status to $status"
   )
   statusContact.close()
+  statusSwitch
   def energyTime = new Date().time
   sendEvent(
     name: "energyTime", value: energyTime,
@@ -608,12 +614,28 @@ private getParamIntVal(param) {
 
 private def getStatusContact() {
   String thisId = device.id
-  def statusContact = getChildDevice("ZPSwS-$thisId-status")
+  def statusContact = getChildDevice("ZPSwS-$thisId-status-contact")
   if (!statusContact) {
     statusContact = addChildDevice(
-      "hubitat", "Virtual Contact Sensor", "ZPSwS-$thisId-status",
+      "hubitat", "Virtual Contact Sensor", "ZPSwS-$thisId-status-contact",
       [name: "$device.displayName Status Contact", isComponent: true]
     )
+    statusContact.updateSetting("txtEnable", [value: false, type: "bool"])
   }
   statusContact
+}
+
+private def getStatusSwitch() {
+  String thisId = device.id
+  def statusSwitch = getChildDevice("ZPSwS-$thisId-status-switch")
+  if (!statusSwitch) {
+    statusSwitch = addChildDevice(
+      "hubitat", "Virtual Switch", "ZPSwS-$thisId-status-switch",
+      [name: "$device.displayName Status Switch", isComponent: true]
+    )
+    statusSwitch.updateSetting("autoOff", [value: "500", type: "enum"])
+    statusSwitch.updateSetting("txtEnable", [value: false, type: "bool"])
+    statusSwitch.updateSetting("logEnable", [value: false, type: "bool"])
+  }
+  statusSwitch
 }
