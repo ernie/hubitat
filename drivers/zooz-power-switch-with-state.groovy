@@ -221,11 +221,14 @@ def initialize() {
     name: "status", value: status,
     descriptionText: "Initialized status to $status"
   )
+  statusContact.close()
   def energyTime = new Date().time
   sendEvent(
     name: "energyTime", value: energyTime,
     descriptionText: "Initialized energyTime to $energyTime"
   )
+  state.levels = state.levels ?: [1]
+  state.names = state.names ?: ["active"]
 }
 
 def configure() {
@@ -256,6 +259,7 @@ def push(button = 1) {
       name: "status", value: idle,
       descriptionText: "Resetting status to $idle"
     )
+    statusContact.close()
     state.firstIdleAt = null
   }
 }
@@ -381,6 +385,11 @@ def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
           name: "status", value: newStatus,
           descriptionText: "Updating status to $newStatus"
         )
+        if (newStatus == finished) {
+          statusContact.open()
+        } else if (statusContact.currentValue("contact") != "closed") {
+          statusContact.close()
+        }
       }
       break
     case "energy":
@@ -434,7 +443,7 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
 }
 
 private powerToStatus(powerLevel) {
-  statusIndex = state.levels.reverse().findIndexOf { it < powerLevel }
+  statusIndex = state.levels?.reverse().findIndexOf { it < powerLevel }
   def newStatus
   def currentTime = new Date().time
   def delayFinish = settings.delayFinish ?: 0
@@ -595,4 +604,16 @@ private hasPendingChange(param) {
 private getParamIntVal(param) {
   def value = settings?."$param.name" ?: param.defaultValue
   param.options ? param.options.indexOf(value) : value
+}
+
+private def getStatusContact() {
+  String thisId = device.id
+  def statusContact = getChildDevice("ZPSwS-$thisId-status")
+  if (!statusContact) {
+    statusContact = addChildDevice(
+      "hubitat", "Virtual Contact Sensor", "ZPSwS-$thisId-status",
+      [name: "$device.displayName Status Contact", isComponent: true]
+    )
+  }
+  statusContact
 }
