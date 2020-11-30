@@ -26,8 +26,6 @@ metadata {
     capability "Configuration"
     capability "FanControl"
     capability "Indicator"
-    capability "Polling"
-    capability "Refresh"
     capability "Switch"
     capability "SwitchLevel"
 
@@ -111,18 +109,36 @@ def parse(String description) {
 }
 
 def on() {
+  state.lastDigital = now()
   def presetLevel = device.currentValue("presetLevel")
   short level = presetLevel == null || presetLevel == 0 ? 0xFF : toZwaveLevel(presetLevel as short)
-  sendEvent(name: "speed", value: toSpeed(level))
-  sendEvent(name: "level", value: toDisplayLevel(level), unit: "%")
-  sendEvent(name: "switch", value: "on")
+  if (level != 0xFF) {
+    def speed = toSpeed(level)
+    def displayLevel = toDisplayLevel(level)
+    if (device.currentValue("speed") != speed) {
+      sendEvent(name: "speed", value: speed, descriptionText: "Speed set to $speed [$eventType]", type: eventType)
+    }
+    if (device.currentValue("level") != displayLevel) {
+      sendEvent(name: "level", value: displayLevel, unit: "%", descriptionText: "Level set to $displayLevel% [$eventType]", type: eventType)
+    }
+  }
+  if (device.currentValue("switch") != "on") {
+    sendEvent(name: "switch", value: "on", descriptionText: "Switch turned on [$eventType]", type: eventType)
+  }
   zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: 0).format()
 }
 
 def off() {
-  sendEvent(name: "speed", value: "off")
-  sendEvent(name: "level", value: 0, unit: "%")
-  sendEvent(name: "switch", value: "off")
+  state.lastDigital = now()
+  if (device.currentValue("speed") != "off") {
+    sendEvent(name: "speed", value: "off", descriptionText: "Speed set to off [$eventType]", type: eventType)
+  }
+  if (device.currentValue("level") != 0) {
+    sendEvent(name: "level", value: 0, unit: "%", descriptionText: "Level set to 0% [$eventType]", type: eventType)
+  }
+  if (device.currentValue("switch") != "off") {
+    sendEvent(name: "switch", value: "off", descriptionText: "Switch turned off [$eventType]", type: eventType)
+  }
   zwave.switchMultilevelV2.switchMultilevelSet(value: 0x00, dimmingDuration: 0).format()
 }
 
@@ -154,44 +170,37 @@ def setSpeed(speed) {
 }
 
 def setLevel(value, duration = 0) {
+  state.lastDigital = now()
   if (logEnable) log.debug "setLevel: $value"
 
   short level = toDisplayLevel(value as short)
   String speed = toSpeed(level)
+  String switchState = speed != "off" ? "on" : "off"
 
-  sendEvent(name: "speed", value: speed)
-  sendEvent(name: "level", value: level, unit: "%")
-  sendEvent(name: "switch", value: speed != "off" ? "on" : speed)
+  if (speed != device.currentValue("speed")) {
+    sendEvent(name: "speed", value: speed, descriptionText: "Speed set to $speed [$eventType]", type: eventType)
+  }
+  if (level != device.currentValue("level")) {
+    sendEvent(name: "level", value: level, unit: "%", descriptionText: "Level set to $level% [$eventType]", type: eventType)
+  }
+  if (switchState != device.currentValue("switch")) {
+    sendEvent(name: "switch", value: switchState, descriptionText: "Switch turned $switchState [$eventType]", type: eventType)
+  }
   zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(level), dimmingDuration: 0).format()
 }
 
-def poll() {
-  delayBetween(statusCommands, commandDelayMs)
-}
-
-def refresh() {
-  def commands = statusCommands
-  // Why this order? Silly reason. It's from page 16 of the manual. :P
-  // https://www.leviton.com/en/docs/DG-000-ZW4SF-02A-W.pdf
-  for (i in [7, 5, 3, 4, 6]) {
-    commands << zwave.configurationV1.configurationGet(parameterNumber: i).format()
-  }
-  if (logEnable) log.debug "Refreshing with commands $commands"
-  delayBetween(commands, commandDelayMs)
-}
-
 def indicatorNever() {
-  sendEvent(name: "indicatorStatus", value: "never")
+  sendEvent(name: "indicatorStatus", value: "never", descriptionText: "indicatorStatus set to \"never\"")
   configurationCommand(7, 0)
 }
 
 def indicatorWhenOff() {
-  sendEvent(name: "indicatorStatus", value: "when off")
+  sendEvent(name: "indicatorStatus", value: "when off", descriptionText: "indicatorStatus set to \"when off\"")
   configurationCommand(7, 255)
 }
 
 def indicatorWhenOn() {
-  sendEvent(name: "indicatorStatus", value: "when on")
+  sendEvent(name: "indicatorStatus", value: "when on", descriptionText: "indicatorStatus set to \"when on\"")
   configurationCommand(7, 254)
 }
 
@@ -250,19 +259,19 @@ private zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd)
 }
 
 private zwaveEvent(hubitat.zwave.commands.configurationv1.ConfigurationReport cmd) {
-  def result = null
+  def result = []
   switch (cmd.parameterNumber) {
     case 3:
-      result = createEvent(name: "minLevel", value: cmd.configurationValue[0])
+      result << createEvent(name: "minLevel", value: cmd.configurationValue[0])
       break
     case 4:
-      result = createEvent(name: "maxLevel", value: cmd.configurationValue[0])
+      result << createEvent(name: "maxLevel", value: cmd.configurationValue[0])
       break
     case 5:
-      result = createEvent(name: "presetLevel", value: cmd.configurationValue[0])
+      result << createEvent(name: "presetLevel", value: cmd.configurationValue[0])
       break
     case 6:
-      result = createEvent(name: "levelIndicatorTimeout", value: cmd.configurationValue[0])
+      result << createEvent(name: "levelIndicatorTimeout", value: cmd.configurationValue[0])
       break
     case 7:
       def value = null
@@ -271,7 +280,7 @@ private zwaveEvent(hubitat.zwave.commands.configurationv1.ConfigurationReport cm
         case 254: value = "when on"; break
         case 255: value = "when off"; break
       }
-      result = createEvent(name: "indicatorStatus", value: value)
+      result << createEvent(name: "indicatorStatus", value: value)
       break
   }
   result
@@ -282,19 +291,20 @@ private zwaveEvent(hubitat.zwave.Command cmd) {
 }
 
 private levelEvent(short level) {
-  def result = null
-  if (level == 0) {
-    result = [
-      createEvent(name: "speed", value: "off"),
-      createEvent(name: "level", value: 0, unit: "%"),
-      switchEvent(false)
-    ]
-  } else if (level >= 1 && level <= 100) {
-    result = [
-      createEvent(name: "speed", value: toSpeed(level)),
-      createEvent(name: "level", value: toDisplayLevel(level), unit: "%"),
-      switchEvent(true)
-    ]
+  def result = []
+  def speed = toSpeed(level)
+  def displayLevel = toDisplayLevel(level)
+  def switchState = level == 0 ? "off" : "on"
+  if (level >= 0 && level <= 100) {
+    if (speed != device.currentValue("speed")) {
+      result << createEvent(name: "speed", value: speed, descriptionText: "Speed set to $speed [$eventType]", type: eventType)
+    }
+    if (displayLevel != device.currentValue("level")) {
+      result << createEvent(name: "level", value: displayLevel, unit: "%", descriptionText: "Level set to $displayLevel% [$eventType]", type: eventType)
+    }
+    if (switchState != device.currentValue("switch")) {
+      result << switchEvent(switchState == "on")
+    }
   } else {
     if (logEnable) log.debug "Bad level $level"
   }
@@ -302,7 +312,8 @@ private levelEvent(short level) {
 }
 
 private switchEvent(boolean on) {
-  createEvent(name: "switch", value: on ? "on" : "off")
+  def switchState = on ? "on" : "off"
+  createEvent(name: "switch", value: switchState, descriptionText: "Switch turned $switchState [$eventType]", type: eventType)
 }
 
 private short toDisplayLevel(short level) {
@@ -320,26 +331,32 @@ private configurationCommand(param, value) {
   delayBetween([
       zwave.configurationV1.configurationSet(parameterNumber: param, configurationValue: [value]).format(),
       zwave.configurationV1.configurationGet(parameterNumber: param).format()
-  ], commandDelayMs)
+  ], 500)
+}
+
+private getEventType() {
+  (state.lastDigital && state.lastDigital > now() - 1000) ?
+    "digital" :
+    "physical"
 }
 
 private setMinLevel(short level) {
-  sendEvent(name: "minLevel", value: level)
+  sendEvent(name: "minLevel", value: level, descriptionText: "minLevel set to $level")
   configurationCommand(3, level)
 }
 
 private setMaxLevel(short level) {
-  sendEvent(name: "maxLevel", value: level)
+  sendEvent(name: "maxLevel", value: level, descriptionText: "maxLevel set to $level")
   configurationCommand(4, level)
 }
 
 private setPresetLevel(short level) {
-  sendEvent(name: "presetLevel", value: level)
+  sendEvent(name: "presetLevel", value: level, descriptionText: "presetLevel set to $level")
   configurationCommand(5, level)
 }
 
 private setLevelIndicatorTimeout(short timeout) {
-  sendEvent(name: "levelIndicatorTimeout", value: timeout)
+  sendEvent(name: "levelIndicatorTimeout", value: timeout, descriptionText: "levelIndicatorTimeout set to $timeout")
   configurationCommand(6, timeout)
 }
 

@@ -1,11 +1,11 @@
 {
   "packageName": "Leviton ZW4SF Fan Controller",
   "author": "Ernie Miller",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-11-22",
+  "dateReleased": "2020-11-30",
   "communityLink": "https://community.hubitat.com/t/release-leviton-zw4sf-driver/53690",
-  "releaseNotes": "Improve behavior on saving preferences, to propagate configuration settings (ex: LED indicator) to the device without a click of the configuration button.",
+  "releaseNotes": "Improve event generation and differentiate between digital and physical actions",
   "drivers": [
     {
       "id": "67255d89-0085-4e3f-b09c-b394889ac6f8",
