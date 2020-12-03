@@ -74,6 +74,28 @@
         "Multimedia",
         "Zigbee"
       ]
+    },
+    {
+      "id": "9f195165-1853-4f29-89f1-0913c08d2ab2",
+      "name": "Leviton Decora Smart Z-Wave Dimmer",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/package-manifests/leviton-decora-dimmer.json",
+      "description": "Works with DZ6HD and DZ1KD switches",
+      "tags": [
+        "Lights & Switches",
+        "ZWave"
+      ]
+    },
+    {
+      "id": "9dc35e2f-4cf9-44a7-9e45-406afc1eb1d4",
+      "name": "Leviton Decora Smart Z-Wave Plug-In Dimmer",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/package-manifests/leviton-decora-plug-in-dimmer.json",
+      "description": "Works with DZPD3-2BW outlet",
+      "tags": [
+        "Lights & Switches",
+        "ZWave"
+      ]
     }
   ]
 }
