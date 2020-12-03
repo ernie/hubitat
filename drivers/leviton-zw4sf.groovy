@@ -188,7 +188,6 @@ def setLevel(value, duration = 0) {
 def refresh() {
   def commands = statusCommands
   commands << zwave.versionV1.versionGet().format()
-  commands << zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
   for (i in 3..7) {
     commands << zwave.configurationV1.configurationGet(
       parameterNumber: i
