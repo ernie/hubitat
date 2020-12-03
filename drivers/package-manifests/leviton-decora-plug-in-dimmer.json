@@ -1,0 +1,16 @@
+{
+  "packageName": "Leviton Decora Smart Z-Wave Plug-In Dimmer",
+  "author": "Ernie Miller",
+  "version": "1.0.0",
+  "minimumHEVersion": "2.2.3",
+  "dateReleased": "2020-12-02",
+  "drivers": [
+    {
+      "id": "5b8ed1bf-044f-410f-a336-e7720ee02fa8",
+      "name": "Leviton Decora Smart Z-Wave Plug-In Dimmer",
+      "namespace": "ernie",
+      "location": "https://raw.githubusercontent.com/ernie/hubitat/main/drivers/leviton-decora-plug-in-dimmer.groovy",
+      "required": true
+    }
+  ]
+}
