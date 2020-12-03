@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2020 Ernie Miller
  *
  * Modified from "Leviton Decora Z-Wave Plus Dimmer" driver by Jason Xia
@@ -7,7 +7,7 @@
  * use this file except in compliance with the License. You may obtain a copy
  * of the License at:
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -18,14 +18,13 @@
 
 import groovy.transform.Field
 
-@Field static List fanSpeeds = ["off", "low", "medium", "medium-high", "high"]
-
 metadata {
   definition (name: "Leviton ZW4SF Fan Controller", namespace: "ernie", author: "Ernie Miller", ocfDeviceType: "oic.d.fan") {
     capability "Actuator"
     capability "Configuration"
     capability "FanControl"
     capability "Indicator"
+    capability "Refresh"
     capability "Switch"
     capability "SwitchLevel"
 
@@ -33,9 +32,7 @@ metadata {
     attribute "minLevel", "number"
     attribute "maxLevel", "number"
     attribute "levelIndicatorTimeout", "number"
-
-    command "speedUp"
-    command "speedDown"
+    attribute "firmwareVersion", "string"
 
     fingerprint mfr:"001D", prod:"0038", deviceId:"0002", inClusters:"0x5E,0x55,0x98,0x9F,0x6C", deviceJoinName: "Leviton ZW4SF Fan Controller"
   }
@@ -62,7 +59,6 @@ metadata {
 
 def installed() {
   if (logEnable) log.debug "installed..."
-  refresh()
 }
 
 def updated() {
@@ -189,6 +185,19 @@ def setLevel(value, duration = 0) {
   zwave.switchMultilevelV2.switchMultilevelSet(value: toZwaveLevel(level), dimmingDuration: 0).format()
 }
 
+def refresh() {
+  def commands = statusCommands
+  commands << zwave.versionV1.versionGet().format()
+  commands << zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
+  for (i in 3..7) {
+    commands << zwave.configurationV1.configurationGet(
+      parameterNumber: i
+    ).format()
+  }
+  log.debug "Refreshing with commands $commands"
+  delayBetween(commands, commandDelayMs)
+}
+
 def indicatorNever() {
   sendEvent(name: "indicatorStatus", value: "never", descriptionText: "indicatorStatus set to \"never\"")
   configurationCommand(7, 0)
@@ -204,28 +213,6 @@ def indicatorWhenOn() {
   configurationCommand(7, 254)
 }
 
-def speedUp() {
-  setSpeed(
-    fanSpeeds[
-      Math.min(
-        fanSpeeds.size() - 1,
-        fanSpeeds.indexOf(device.currentValue("speed")) + 1
-      )
-    ]
-  )
-}
-
-def speedDown() {
-  setSpeed(
-    fanSpeeds[
-      Math.max(
-        0,
-        fanSpeeds.indexOf(device.currentValue("speed")) - 1
-      )
-    ]
-  )
-}
-
 private String toSpeed(level) {
   switch (level as int) {
     case { it <= 0 }: "off"; break
@@ -236,6 +223,8 @@ private String toSpeed(level) {
   }
 }
 
+private static int getCommandDelayMs() { 500 }
+
 private zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport cmd) {
   levelEvent(cmd.value)
 }
@@ -245,7 +234,7 @@ private zwaveEvent(hubitat.zwave.commands.switchmultilevelv1.SwitchMultilevelRep
 }
 
 private zwaveEvent(hubitat.zwave.commands.switchmultilevelv1.SwitchMultilevelStopLevelChange cmd) {
-  zwave.switchMultilevelV1.switchMultilevelGet().format()
+  response(zwave.switchMultilevelV1.switchMultilevelGet())
 }
 
 private zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd) {
@@ -286,6 +275,10 @@ private zwaveEvent(hubitat.zwave.commands.configurationv1.ConfigurationReport cm
   result
 }
 
+private zwaveEvent(hubitat.zwave.commands.versionv1.VersionReport cmd) {
+  createEvent(name: "firmwareVersion", value: "${cmd.firmware0Version}.${cmd.firmware0SubVersion}", displayed: false)
+}
+
 private zwaveEvent(hubitat.zwave.Command cmd) {
   log.warn "Unhandled zwave command $cmd"
 }
@@ -316,6 +309,10 @@ private switchEvent(boolean on) {
   createEvent(name: "switch", value: switchState, descriptionText: "Switch turned $switchState [$eventType]", type: eventType)
 }
 
+private getStatusCommands() {
+  [zwave.switchMultilevelV1.switchMultilevelGet().format()]
+}
+
 private short toDisplayLevel(short level) {
   level = Math.max(0, Math.min(100, level))
   (level == (short) 99) ? 100 : level
@@ -331,7 +328,7 @@ private configurationCommand(param, value) {
   delayBetween([
       zwave.configurationV1.configurationSet(parameterNumber: param, configurationValue: [value]).format(),
       zwave.configurationV1.configurationGet(parameterNumber: param).format()
-  ], 500)
+  ], commandDelayMs)
 }
 
 private getEventType() {
