@@ -1,11 +1,11 @@
 {
   "packageName": "Zooz Power Switch w/State",
   "author": "Ernie Miller",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-11-29",
+  "dateReleased": "2020-12-02",
   "communityLink": "https://community.hubitat.com/t/release-zooz-power-switch-with-state/56472",
-  "releaseNotes": "Add a child contact sensor device, to trigger Alexa on finished state if desired (finished = open)",
+  "releaseNotes": "Log unhandled Z-Wave events.",
   "drivers": [
     {
       "id": "1b99b758-17a6-4ea3-8431-055497c09632",

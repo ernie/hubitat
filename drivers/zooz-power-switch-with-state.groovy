@@ -341,7 +341,7 @@ def parse(String description) {
   result
 }
 
-def zwaveEvent(
+private zwaveEvent(
   hubitat.zwave.commands.configurationv2.ConfigurationReport command
 ) {
   def val = command.scaledConfigurationValue
@@ -360,7 +360,7 @@ def zwaveEvent(
   []
 }
 
-def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command) {
+private zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command) {
   def value = (command.value == 0xFF) ? "on" : "off"
   [createEvent(
     name: "switch", value: value, type: "digital",
@@ -368,13 +368,13 @@ def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport command)
   )]
 }
 
-def zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport command) {
+private zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport command) {
   def result = []
   result << createSwitchEvent(command.value, "physical")
   result
 }
 
-def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
+private zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
   def result = []
   def val = command.scaledMeterValue
   def meter
@@ -435,7 +435,7 @@ def zwaveEvent(hubitat.zwave.commands.meterv3.MeterReport command) {
   result
 }
 
-def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
+private zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
   def encapsulatedCmd = cmd.encapsulatedCommand(commandClassVersions)
 
   def result = []
@@ -446,6 +446,10 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
     log.warn "Unable to extract encapsulated cmd from $cmd"
   }
   result
+}
+
+private zwaveEvent(hubitat.zwave.Command cmd) {
+  log.warn "Unhandled zwave command $cmd"
 }
 
 private powerToStatus(powerLevel) {
