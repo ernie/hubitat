@@ -113,7 +113,7 @@ def parse(String description) {
 def on() {
   state.lastDigital = now()
   def fadeOnTime = device.currentValue("fadeOnTime")
-  short duration = fadeOnTime == null ? 255 : fadeOnTime
+  short duration = fadeOnTime == null ? 2 : durationToSeconds(fadeOnTime.shortValue())
   if (device.currentValue("switch") != "on") {
     sendEvent(name: "switch", value: "on", descriptionText: "Switch turned on [$eventType]", type: eventType)
   }
@@ -125,7 +125,7 @@ def on() {
 def off() {
   state.lastDigital = now()
   def fadeOffTime = device.currentValue("fadeOffTime")
-  short duration = fadeOffTime == null ? 255 : fadeOffTime
+  short duration = fadeOffTime == null ? 2 : durationToSeconds(fadeOffTime.shortValue())
   if (device.currentValue("level") != 0) {
     sendEvent(name: "level", value: 0, unit: "%", descriptionText: "Level set to 0% [$eventType]", type: eventType)
   }
@@ -142,7 +142,7 @@ def setLevel(value, duration = null) {
   if (logEnable) log.debug "setLevel: $value"
 
   short level = toDisplayLevel(value as short)
-  short dimmingDuration = durationSeconds == null ? 255 : secondsToDuration(durationSeconds as int)
+  short dimmingDuration = duration == null ? 2 : duration
   String switchState = level == 0 ? "off" : "on"
 
   if (level != device.currentValue("level")) {
