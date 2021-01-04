@@ -56,10 +56,10 @@ metadata {
         description: "0 to 100 (default 100)", range: "0..100",
         displayDuringSetup: false, required: false
     input name: "fadeOnTime", type: "number", title: "Fade-on time",
-        description: "0 to 253 (default 2)\n0 = instant on\n1 - 127 = 1 - 127 seconds\n128 - 253 = 1 - 126 minutes", range: "0..253",
+        description: "0 to 253 (default 2)<br>0 = instant on<br>1 - 127 = 1 - 127 seconds<br>128 - 253 = 1 - 126 minutes", range: "0..253",
         displayDuringSetup: false, required: false
     input name: "fadeOffTime", type: "number", title: "Fade-off time",
-        description: "0 to 253 (default 2)\n0 = instant off\n1 - 127 = 1 - 127 seconds\n128 - 253 = 1 - 126 minutes", range: "0..253",
+        description: "0 to 253 (default 2)<br>0 = instant off<br>1 - 127 = 1 - 127 seconds<br>128 - 253 = 1 - 126 minutes", range: "0..253",
         displayDuringSetup: false, required: false
     input name: "levelIndicatorTimeout", type: "number", title: "Dim level indicator timeout",
         description: "0 to 255 (default 3)", range: "0..255",
