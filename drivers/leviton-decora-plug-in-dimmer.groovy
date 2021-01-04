@@ -27,6 +27,7 @@ metadata {
     capability "Switch Level"
 
     attribute "loadType", "enum", ["Incandescent", "LED", "CFL"]
+    attribute "presetLevel", "number"
     attribute "minLevel", "number"
     attribute "maxLevel", "number"
     attribute "fadeOnTime", "number"
@@ -42,6 +43,9 @@ metadata {
         displayDuringSetup: false, required: false
     input name: "indicatorStatus", type: "enum", title: "Indicator LED is lit",
         options: ["When switch is off (default)", "When switch is on", "Never"],
+        displayDuringSetup: false, required: false
+    input name: "presetLevel", type: "number", title: "Light turns on to level",
+        description: "0 to 100 (0 = last level, default 100)", range: "0..100",
         displayDuringSetup: false, required: false
     input name: "minLevel", type: "number", title: "Minimum light level",
         description: "0 to 100 (default 10)", range: "0..100",
@@ -82,6 +86,9 @@ def configure() {
   if (indicatorStatus != null) {
     commands.addAll(setIndicatorStatus(indicatorStatus))
   }
+  if (presetLevel != null) {
+    commands.addAll(setPresetLevel(presetLevel as short))
+  }
   if (minLevel != null) {
     commands.addAll(setMinLevel(minLevel as short))
   }
@@ -113,12 +120,21 @@ def parse(String description) {
 def on() {
   state.lastDigital = now()
   def fadeOnTime = device.currentValue("fadeOnTime")
+  def presetLevel = device.currentValue("presetLevel")
   short duration = fadeOnTime == null ? 2 : durationToSeconds(fadeOnTime.shortValue())
+  short level = presetLevel == null || presetLevel == 0 ? 0xFF : toZwaveLevel(presetLevel as short)
+  if (level != 0xFF) {
+    def displayLevel = toDisplayLevel(level)
+    if (device.currentValue("level") != displayLevel) {
+      sendEvent(name: "level", value: displayLevel, unit: "%", descriptionText: "Level set to $displayLevel% [$eventType]", type: eventType)
+    }
+  }
   if (device.currentValue("switch") != "on") {
     sendEvent(name: "switch", value: "on", descriptionText: "Switch turned on [$eventType]", type: eventType)
   }
   delayBetween([
-      zwave.switchMultilevelV2.switchMultilevelSet(value: 0xFF, dimmingDuration: duration).format()
+      zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: duration).format(),
+      zwave.switchMultilevelV1.switchMultilevelGet().format()
   ], commandDelayMs)
 }
 
@@ -164,7 +180,7 @@ def setLevel(value, duration = null) {
 def refresh() {
   def commands = statusCommands
   commands << zwave.versionV1.versionGet().format()
-  for (i in [1, 2, 3, 4, 7, 8]) {
+  for (i in [1, 2, 3, 4, 5, 7, 8]) {
     commands << zwave.configurationV1.configurationGet(parameterNumber: i).format()
   }
   log.debug "Refreshing with commands $commands"
@@ -224,6 +240,9 @@ private zwaveEvent(hubitat.zwave.commands.configurationv1.ConfigurationReport cm
       break
     case 4:
       result = createEvent(name: "maxLevel", value: cmd.configurationValue[0])
+      break
+    case 5:
+      result = createEvent(name: "presetLevel", value: cmd.configurationValue[0])
       break
     case 7:
       def value = null
@@ -352,6 +371,11 @@ private setMinLevel(short level) {
 private setMaxLevel(short level) {
   sendEvent(name: "maxLevel", value: level, descriptionText: "maxLevel set to $level")
   configurationCommand(4, level)
+}
+
+private setPresetLevel(short level) {
+  sendEvent(name: "presetLevel", value: level, descriptionText: "presetLevel set to $level")
+  configurationCommand(5, level)
 }
 
 private setLoadType(String loadType) {
