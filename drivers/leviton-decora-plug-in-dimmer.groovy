@@ -142,7 +142,12 @@ def setLevel(value, duration = null) {
   if (logEnable) log.debug "setLevel: $value"
 
   short level = toDisplayLevel(value as short)
-  short dimmingDuration = duration == null ? 2 : duration
+  short dimmingDuration
+  if (!duration) {
+    dimmingDuration = (device.currentValue("switch") == "on" && device.currentValue("level") > value) ? durationToSeconds(fadeOffTime.shortValue()) : durationToSeconds(fadeOnTime.shortValue())
+  } else {
+    dimmingDuration = duration
+  }
   String switchState = level == 0 ? "off" : "on"
 
   if (level != device.currentValue("level")) {
