@@ -53,25 +53,46 @@ metadata {
     input name: "levelIndicatorTimeout", type: "number", title: "Level indicator timeout in seconds",
       description: "0 to 255 (default 3), 0 = level indicator off, 255 = level indicator always on", range: "0..255",
       displayDuringSetup: false, required: false
+    input name: "speedMapping",
+      type: "enum",
+      title: "Speed Mapping",
+      description: "Choose how Hubitat's 5 speeds are mapped on to the controller's 4 speeds.  Note: If either the lowest or highest setting is undesirable for your fan, you can choose a mode that leaves it unused to have only 3 speeds.",
+      options: [
+        "u,l,m,h"  : "1 = unused, 2 = Low, 3 = Medium, 4 = High",
+        "l,m,h,u"  : "1 = Low, 2 = Medium, 3 = High, 4 = Unused",
+        "l,m,mh,h" : "1 = Low, 2 = Medium, 3 = Medium-High, 4 = High",
+        "l,ml,m,h" : "1 = Low, 2 = Medium-Low, 3 = Medium, 4 = High",
+        "l,ml,mh,h": "1 = Low, 2 = Medium-Low, 3 = Medium-High, 4 = High"
+      ],
+      defaultValue: "l,m,mh,h"
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
   }
 }
 
+void debugLog(String msg) {
+  if (logEnable)
+    log.debug("${device.label?device.label:device.name}: ${msg}")
+}
+
 def installed() {
-  if (logEnable) log.debug "installed..."
+  debugLog "installed..."
 }
 
 def updated() {
   if (state.lastUpdatedAt != null && state.lastUpdatedAt >= now() - 1000) {
-    if (logEnable) log.debug "ignoring double updated"
+    debugLog "ignoring double updated"
     return
   }
-  if (logEnable) log.debug "updated..."
+  debugLog "updated..."
   state.lastUpdatedAt = now()
   configure()
 }
 
 def configure() {
+  // update supportedFanSpeeds based on chosen speed mapping
+  def fanSpeeds = speedMapping.split(",").findAll{ it != "u" }.collect{ mapSpeedKeyToSpeed(it) }
+  sendEvent(name: "supportedFanSpeeds", value: groovy.json.JsonOutput.toJson(fanSpeeds.reverse() + ["off", "on"]))
+
   def commands = []
   if (indicatorStatus != null) {
     commands.addAll(setIndicatorStatus(indicatorStatus))
@@ -88,7 +109,7 @@ def configure() {
   if (levelIndicatorTimeout != null) {
     commands.addAll(setLevelIndicatorTimeout(levelIndicatorTimeout as short))
   }
-  if (logEnable) log.debug "Configuring with commands $commands"
+  debugLog "Configuring with commands $commands"
   commands
 }
 
@@ -97,9 +118,9 @@ def parse(String description) {
   def cmd = zwave.parse(description, [0x20: 1, 0x25:1, 0x26: 1, 0x70: 1, 0x72: 2])
   if (cmd) {
     result = zwaveEvent(cmd)
-    if (logEnable) log.debug "Parsed $cmd to $result"
+    debugLog "Parsed $cmd to $result"
   } else {
-    if (logEnable) log.debug "Non-parsed event: $description"
+    debugLog "Non-parsed event: $description"
   }
   result
 }
@@ -109,7 +130,7 @@ def on() {
   def presetLevel = device.currentValue("presetLevel")
   short level = presetLevel == null || presetLevel == 0 ? 0xFF : toZwaveLevel(presetLevel as short)
   if (level != 0xFF) {
-    def speed = toSpeed(level)
+    def speed = mapLevelToSpeed(level)
     def displayLevel = toDisplayLevel(level)
     if (device.currentValue("speed") != speed) {
       sendEvent(name: "speed", value: speed, descriptionText: "Speed set to $speed [$eventType]", type: eventType)
@@ -138,39 +159,42 @@ def off() {
   zwave.switchMultilevelV2.switchMultilevelSet(value: 0x00, dimmingDuration: 0).format()
 }
 
-def setSpeed(speed) {
-  if (logEnable) log.debug "setSpeed: $speed"
+def setSpeed(String speed) {
+  debugLog "setSpeed: $speed"
 
-  def value = null
-
-  switch (speed) {
-    case ["low", "medium-low"]:
-      setLevel(25)
-      break
-    case "medium":
-      setLevel(50)
-      break
-    case "medium-high":
-      setLevel(75)
-      break
-    case "high":
-      setLevel(100)
-      break
-    case ["on", "auto"]:
-      return on()
-    case "off":
-      return off()
-    default:
-      if (logEnable) log.debug "Invalid speed: $speed"
+  // make sure the requested speed is in the supported list
+  def supported = new groovy.json.JsonSlurper().parseText(device.latestValue("supportedFanSpeeds"))
+  if (!supported.any{ it == speed }) {
+    log.warn "${device.label?device.label:device.name}: Attempted to setSpeed to a speed ($speed) that is not supported!"
+    return
   }
+
+  // other than on/off/auto, we call out to mapping function
+  if (speed == "on" || speed == "auto")
+    return on()
+  if (speed == "off")
+    return off()
+  setLevel(mapSpeedToLevel(speed))
+}
+
+def cycleSpeed() {
+  def cycleSpeeds = new groovy.json.JsonSlurper().parseText(device.latestValue("supportedFanSpeeds")).findAll{ it != "on" }
+  def currentSpeed = device.latestValue("speed")
+  def currentIndex = cycleSpeeds.findIndexOf{ it == currentSpeed }
+
+  def newIndex = (currentIndex + 1) % cycleSpeeds.size()
+  def newSpeed = cycleSpeeds[newIndex]
+
+  debugLog "cycleSpeed setting speed from $currentSpeed to $newSpeed"
+  setSpeed(newSpeed)
 }
 
 def setLevel(value, duration = 0) {
   state.lastDigital = now()
-  if (logEnable) log.debug "setLevel: $value"
+  debugLog "setLevel: $value"
 
   short level = toDisplayLevel(value as short)
-  String speed = toSpeed(level)
+  String speed = mapLevelToSpeed(level)
   String switchState = speed != "off" ? "on" : "off"
 
   if (speed != device.currentValue("speed")) {
@@ -190,10 +214,10 @@ def refresh() {
   commands << zwave.versionV1.versionGet().format()
   for (i in 3..7) {
     commands << zwave.configurationV1.configurationGet(
-      parameterNumber: i
+        parameterNumber: i
     ).format()
   }
-  log.debug "Refreshing with commands $commands"
+  debugLog "Refreshing with commands $commands"
   delayBetween(commands, commandDelayMs)
 }
 
@@ -210,16 +234,6 @@ def indicatorWhenOff() {
 def indicatorWhenOn() {
   sendEvent(name: "indicatorStatus", value: "when on", descriptionText: "indicatorStatus set to \"when on\"")
   configurationCommand(7, 254)
-}
-
-private String toSpeed(level) {
-  switch (level as int) {
-    case { it <= 0 }: "off"; break
-    case 1..25: "low"; break
-    case 26..50: "medium"; break
-    case 51..75: "medium-high"; break
-    default: "high"
-  }
 }
 
 private static int getCommandDelayMs() { 500 }
@@ -242,7 +256,7 @@ private zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd)
   } else if (cmd.value == 255) {
     switchEvent(true)
   } else {
-    if (logEnable) log.debug "Bad switch value $cmd.value"
+    debugLog "Bad switch value $cmd.value"
   }
 }
 
@@ -279,12 +293,12 @@ private zwaveEvent(hubitat.zwave.commands.versionv1.VersionReport cmd) {
 }
 
 private zwaveEvent(hubitat.zwave.Command cmd) {
-  log.warn "Unhandled zwave command $cmd"
+  log.warn "${device.label?device.label:device.name}: Unhandled zwave command $cmd"
 }
 
 private levelEvent(short level) {
   def result = []
-  def speed = toSpeed(level)
+  def speed = mapLevelToSpeed(level)
   def displayLevel = toDisplayLevel(level)
   def switchState = level == 0 ? "off" : "on"
   if (level >= 0 && level <= 100) {
@@ -298,7 +312,7 @@ private levelEvent(short level) {
       result << switchEvent(switchState == "on")
     }
   } else {
-    if (logEnable) log.debug "Bad level $level"
+    debugLog "Bad level $level"
   }
   result
 }
@@ -325,7 +339,7 @@ private configurationCommand(param, value) {
   param = param as short
   value = value as short
   delayBetween([
-      zwave.configurationV1.configurationSet(parameterNumber: param, configurationValue: [value]).format(),
+      zwave.configurationV1.configurationSet(parameterNumber: param, size: 1, configurationValue: [value]).format(),
       zwave.configurationV1.configurationGet(parameterNumber: param).format()
   ], commandDelayMs)
 }
@@ -361,5 +375,50 @@ private setIndicatorStatus(String status) {
     case "When switch is off (default)": return indicatorWhenOff()
     case "When switch is on": return indicatorWhenOn()
     case "Never": return indicatorNever()
+  }
+}
+
+def mapSpeedToLevel(String speed) {
+  // convert full speed string to the shorthand used in our mapping setting
+  def speedKey = speed.split("-").collect{it[0]}.join("")
+
+  // find the index of the speed in the speed mapping
+  def speedIndex = speedMapping.split(",").findIndexOf{it == speedKey}
+  if (speedIndex == -1) // not found, assume off...shouldn't really happen ever
+    return 0;
+
+  return (speedIndex + 1) * 25; // 0-based index, four levels [25,50,75,100]
+}
+
+def String mapLevelToSpeed(int level) {
+  // 0 is always off
+  if (level == 0)
+    return "off"
+
+  // find the index within possible speeds for the given level
+  def speedIndex = [25, 50, 75, 100].findAll{ it < level }.size()
+
+  // get speed from speedMapping
+  def speedKey = speedMapping.split(",")[speedIndex]
+
+  // handle unused (for "u,l,m,h", unused is low...for "l,m,h,u", unused is high)
+  if (speedKey == "u")
+    speedKey = (speedIndex == 0) ? "l" : "h"
+
+  return mapSpeedKeyToSpeed(speedKey)
+}
+
+def String mapSpeedKeyToSpeed(String speedKey) {
+  switch (speedKey) {
+    case "l":
+      return "low"
+    case "ml":
+      return "medium-low"
+    case "m":
+      return "medium"
+    case "mh":
+      return "medium-high"
+    default:
+      return "high"
   }
 }
