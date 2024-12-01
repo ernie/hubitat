@@ -5,7 +5,7 @@
   "minimumHEVersion": "2.2.3",
   "dateReleased": "2024-12-01",
   "communityLink": "https://community.hubitat.com/t/release-leviton-zw4sf-driver/53690",
-  "releaseNotes": Update fingerprint and send size with a configuration set, possibly improving config set results",
+  "releaseNotes": "Update fingerprint and send size with a configuration set, possibly improving config set results",
   "drivers": [
     {
       "id": "67255d89-0085-4e3f-b09c-b394889ac6f8",
