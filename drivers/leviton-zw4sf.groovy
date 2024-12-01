@@ -34,7 +34,7 @@ metadata {
     attribute "levelIndicatorTimeout", "number"
     attribute "firmwareVersion", "string"
 
-    fingerprint mfr:"001D", prod:"0038", deviceId:"0002", inClusters:"0x5E,0x55,0x98,0x9F,0x6C", deviceJoinName: "Leviton ZW4SF Fan Controller"
+    fingerprint mfr:"001D", prod:"0038", deviceId:"0002", inClusters:"0x5E,0x26,0x85,0x8E,0x59,0x55,0x86,0x72,0x5A,0x87,0x73,0x98,0x9F,0x6C,0x7A,0x70,0x2B,0x2C", deviceJoinName: "Leviton ZW4SF Fan Controller"
   }
 
   preferences {
@@ -325,7 +325,7 @@ private configurationCommand(param, value) {
   param = param as short
   value = value as short
   delayBetween([
-      zwave.configurationV1.configurationSet(parameterNumber: param, configurationValue: [value]).format(),
+      zwave.configurationV1.configurationSet(parameterNumber: param, size: 1, configurationValue: [value]).format(),
       zwave.configurationV1.configurationGet(parameterNumber: param).format()
   ], commandDelayMs)
 }
