@@ -1,11 +1,11 @@
 {
   "packageName": "Leviton ZW4SF Fan Controller",
   "author": "Ernie Miller",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "minimumHEVersion": "2.2.3",
-  "dateReleased": "2020-12-02",
+  "dateReleased": "2024-12-01",
   "communityLink": "https://community.hubitat.com/t/release-leviton-zw4sf-driver/53690",
-  "releaseNotes": "Remove unnecessary speedUp/speedDown commands, add Refresh command and pull firmware version from devices",
+  "releaseNotes": Update fingerprint and send size with a configuration set, possibly improving config set results",
   "drivers": [
     {
       "id": "67255d89-0085-4e3f-b09c-b394889ac6f8",
