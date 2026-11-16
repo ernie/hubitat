@@ -59,6 +59,7 @@ metadata {
 
 def installed() {
   if (logEnable) log.debug "installed..."
+  sendEvent(name: "supportedFanSpeeds", value: new groovy.json.JsonBuilder(["low", "medium", "medium-high", "high", "on", "off"]).toString())
 }
 
 def updated() {
@@ -68,6 +69,7 @@ def updated() {
   }
   if (logEnable) log.debug "updated..."
   state.lastUpdatedAt = now()
+  sendEvent(name: "supportedFanSpeeds", value: new groovy.json.JsonBuilder(["low", "medium", "medium-high", "high", "on", "off"]).toString())
   configure()
 }
 
